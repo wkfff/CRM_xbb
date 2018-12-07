@@ -1,0 +1,99 @@
+<!--create by zhangxiaomin on 2018/11/16-->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>润合美CRM系统</title>
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <link rel="stylesheet" href="../../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-ui@2.4.6/lib/theme-chalk/index.css">
+  <link rel="stylesheet" href="../../dist/css/enterprise.css?rev=d90f4c5bcc4b672da3deebb0c94a1597">
+</head>
+ <body>
+   <div id="app">
+    <section class="top" style="z-index:10;">
+      <h1 class="title">
+        <span>销售明细分析</span>
+      </h1>
+      <div style="margin-top:0px;">
+        <el-tabs v-model="activeName" @tab-click="handleClick" style="width:400px;margin: auto;">
+          <el-tab-pane label="单品查询" name="first"></el-tab-pane>
+          <el-tab-pane label="分品牌统计" name="second"></el-tab-pane>
+          <el-tab-pane label="分月份统计" name="third"></el-tab-pane>
+          <el-tab-pane label="分客户统计" name="fourth"></el-tab-pane>
+        </el-tabs>
+      </div>
+    </section>
+    <section class="col-md-12">
+      <div style="padding: 0;margin-top: 70px;">
+        <div class="col-md-12 form-group well" style="width: 98%;margin-left: 1%;" :style="heightselect">
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="店铺名称" prop="typeId">
+                  <el-input v-model="select.name" auto-complete="off" clearable @change="change" class="brand" :style="width1"></el-input>
+              </el-form-item>
+            </el-form>
+          </el-col>
+         
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="主营品牌" prop="typeId">
+                    <el-select v-model="select.main_brand" placeholder="请选择" @change="change" clearable :style="width1">
+                        <!-- <el-option v-for="item in crmsbrand" :label="item.dict_value" :value="item.dict_value"></el-option> -->
+                    </el-select>
+                </el-form-item>
+            </el-form>
+          </el-col>
+      </div>
+    </section>
+    <section class="col-md-12" style="padding: 0;">
+      <div class="col-md-12">
+        <el-table ref="multipleTable" :data="tableData" tooltip-effect="dark" :default-sort = "{prop: 'date', order: 'descending'}" style="width: 100%" :max-height="tableHeight">
+          <el-table-column sortable prop="customer_name"  show-overflow-tooltip fixed fixed label="客户名称" min-width="120">
+            <!-- <template scope="scope">
+                <span style="color: #008cee;cursor: pointer;"  @click="handleEdit(scope.row.shop_id,scope.row.customer_name)">{{scope.row.customer_name}}</span>
+              </template> -->
+          </el-table-column>
+          <el-table-column  sortable label="店铺名称" show-overflow-tooltip fixed min-width="120">
+            <template scope="scope">
+              <span style="color: #008cee;cursor: pointer;"  @click="handleEdit(scope.row.id,scope.row.name,scope.row.customer_id)">{{scope.row.name?scope.row.name:'--'}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column  sortable prop="main_brand" label="主营品牌" min-width="120" show-overflow-tooltip></el-table-column>
+          <el-table-column  sortable prop="shop_type" label="店铺类型" min-width="120"></el-table-column>
+          <el-table-column  sortable prop="shop_level" label="店铺等级" min-width="120"></el-table-column>
+          <el-table-column  sortable prop="category_rank" label="类目排名" min-width="120"></el-table-column>
+          <el-table-column  sortable prop="dsr" label="DSR" min-width="120"></el-table-column>
+          <el-table-column  sortable prop="shop_fans" label="店铺粉丝数" min-width="120"></el-table-column>
+          <el-table-column  sortable prop="wtao_fans" label="微淘粉丝数" min-width="120"></el-table-column>
+          <el-table-column  sortable prop="good_num" label="好评率" min-width="120"></el-table-column>
+          <el-table-column  sortable prop="unit_price" label="客单价"  min-width="120"></el-table-column>
+          <el-table-column  sortable prop="goods_num" label="宝贝数"  min-width="120"></el-table-column>
+          <el-table-column  sortable prop="service_tel" label="客服电话" min-width="120"></el-table-column>
+          <el-table-column  sortable prop="open_shop_date" :formatter="dateFormat" label="开店日期" min-width="140"></el-table-column>
+          <el-table-column  sortable prop="location" label="所在地区" min-width="120"></el-table-column>
+          <el-table-column  sortable prop="main_categories" label="主营类目" min-width="120"></el-table-column>
+          <el-table-column  sortable prop="shop_tag" label="店铺标签" min-width="120"></el-table-column>
+          <el-table-column  sortable prop="average_monthly_sales" label="月均销售额" min-width="120"></el-table-column>
+          <el-table-column  sortable prop="isclose_shop" label="是否关店"  min-width="120"></el-table-column>
+          <el-table-column  sortable prop="remark" label="备注" min-width="120"></el-table-column>
+        </el-table>
+      </div>
+      <div class="col-md-12 block" style="float:right;">
+          <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage" :page-sizes="[10, 50, 100, 200]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper" :total="total"  style="float: right;margin-top:10px;">
+          </el-pagination>
+        </div>
+    </section>
+  </div>
+  <script src="../../dist/js/vue.js"></script>
+  <script src="../../dist/js/index.js"></script>
+  <script src="../../plugins/jQuery/jquery-2.2.3.min.js"></script>
+  <script src="../../bootstrap/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
+  <script src="../../dist/js/moment.js"></script>
+<script src="../../dist/js/monthlyStatistics.js?rev=99548beacdc674745e8d4238fcb15008"></script>
+</body>
+</html>

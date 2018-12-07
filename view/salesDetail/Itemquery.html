@@ -1,0 +1,297 @@
+<!--create by zhangxiaomin on 2018/11/16-->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>润合美CRM系统</title>
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <link rel="stylesheet" href="../../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-ui@2.4.6/lib/theme-chalk/index.css">
+  <link rel="stylesheet" href="../../dist/css/enterprise.css?rev=d90f4c5bcc4b672da3deebb0c94a1597">
+  <style>
+    .el-tabs__nav{
+      margin-left: 40%;
+    }
+  </style>
+</head>
+ <body>
+   <div id="app" v-cloak>
+    <section class="top" style="z-index:10;">
+      <h1 class="title">
+        <span>销售明细分析</span>
+      </h1>
+      <el-tabs v-model="activeName" @tab-click="handleClick" style="width: 99%;margin: auto; margin-top: 50px;">
+        <el-tab-pane label="单品查询" name="first">
+          <section class="col-md-12">
+            <div class="col-md-12 form-group well" style="width: 100%;padding:0;" :style="heightselect">
+              <el-col :span="6" style="margin-top: 10px;height: 40px;">
+                <el-form :model="form" label-width="90px" class="demo-ruleForm">
+                  <el-form-item label="客户名称" prop="typeId">
+                    <el-input v-model="selectItem.customerName" auto-complete="off" clearable @change="changeItem":style="width1"></el-input>
+                  </el-form-item>
+                </el-form>
+              </el-col>
+              <el-col :span="6" style="margin-top: 10px;height: 40px;">
+                <el-form :model="form" label-width="90px" class="demo-ruleForm">
+                  <el-form-item label="品牌" prop="typeId">
+                    <el-select v-model="selectItem.brand" placeholder="请选择" @change="changeItem" clearable :style="width1">
+                      <el-option v-for="item in crmsbrand" :label="item.typename" :value="item.typecode"></el-option>
+                    </el-select>
+                  </el-form-item>
+                </el-form>
+              </el-col>
+              <el-col :span="6" style="margin-top: 10px;height: 40px;">
+                <el-form :model="form" label-width="90px" class="demo-ruleForm">
+                  <el-form-item label="商品名称" prop="typeId">
+                    <el-input v-model="selectItem.goodsName" auto-complete="off" clearable @change="changeItem" :style="width1"></el-input>
+                  </el-form-item>
+                </el-form>
+              </el-col>
+              <el-col :span="6" style="margin-top: 10px;height: 40px;">
+                <el-form :model="form" label-width="90px" class="demo-ruleForm">
+                  <el-form-item label="商品条码" prop="typeId">
+                    <el-input v-model="selectItem.goodsCode" auto-complete="off" clearable @change="changeItem":style="width1"></el-input>
+                  </el-form-item>
+                </el-form>
+              </el-col>
+              <el-col :span="6" style="margin-top: 10px;height: 40px;">
+                <el-form :model="form" label-width="90px" class="demo-ruleForm">
+                  <el-form-item label="下单时间" clearable prop="typeId">
+                    <el-date-picker  v-model="selectItem.date" type="daterange" clearable @change="changeItem" align="right" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :picker-options="pickerOptions2" value-format="yyyy-MM-dd" :style="width1">
+                    </el-date-picker>
+                  </el-form-item>
+                </el-form>
+              </el-col>
+            </div>
+          </section>
+          <section class="col-md-12" style="padding: 0;">
+            <el-popover placement="bottom" width="250" trigger="click" style="height:500px;">
+              <el-col :span="10">客户数</el-col>
+              <el-col :span="14">{{this.abtotals.custotal?this.abtotals.custotal:'0'}}</el-col>
+              <el-col :span="10">品牌个数</el-col>
+              <el-col :span="14">{{this.abtotals.brandtotal?this.abtotals.brandtotal:'0'}}</el-col>
+              <el-col :span="10">订单数</el-col>
+              <el-col :span="14">{{this.abtotals.ordertotal?this.abtotals.ordertotal:'0'}}</el-col>
+              <el-col :span="10">出库金额</el-col>
+              <el-col :span="14">{{this.abtotals.qutboundamount?this.abtotals.qutboundamount:'0'}}</el-col>
+              <el-col :span="10">客均订单数</el-col>
+              <el-col :span="14">{{toThousands(this.abtotals.cusorders?this.abtotals.cusorders:'0',2)}}</el-col>
+              <el-col :span="10">客均出库金额</el-col>
+              <el-col :span="14">{{toThousands(this.abtotals.cusqutboundamount?this.abtotals.cusqutboundamount:'0',2)}}</el-col>
+              <el-button slot="reference" type="primary" icon="el-icon-tickets" class="setting">概要统计</el-button>
+            </el-popover>
+            <div class="col-md-12">
+              <el-table ref="multipleTable" :data="itemtableData" tooltip-effect="dark" :default-sort = "{prop: 'date', order: 'descending'}" style="width: 100%" :max-height="tableHeight">
+                <el-table-column sortable prop="csocode" fixed label="订单编号" min-width="120"></el-table-column>
+                <el-table-column sortable prop="cinvcode" label="商品条码" min-width="120" show-overflow-tooltip></el-table-column>
+                <el-table-column sortable prop="cinvname" label="商品名称" min-width="120"></el-table-column>
+                <el-table-column sortable prop="ccuscode" label="客户编码" min-width="120"></el-table-column>
+                <el-table-column sortable prop="name" label="客户名称" min-width="120"></el-table-column>
+                <el-table-column sortable prop="cinvcname" label="品牌名称" min-width="120"></el-table-column>
+                <el-table-column sortable prop="iquantity" label="出库数量" min-width="120">
+                  <template scope="scope">
+                    <span>{{toThousands(scope.row.isum?scope.row.isum:0,0)}}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column sortable prop="isum" label="出库金额" min-width="120">
+                  <template scope="scope">
+                    <span>{{toThousands(scope.row.isum?scope.row.isum:0,2)}}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column sortable prop="ddate" label="下单日期" :formatter="dateFormat" min-width="120"></el-table-column>
+              </el-table>
+            </div>
+            <div class="col-md-12 block" style="float:right;">
+                <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage" :page-sizes="[10, 50, 100, 200]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper" :total="total"  style="float: right;margin-top:10px;">
+                </el-pagination>
+              </div>
+          </section>
+        </el-tab-pane>
+        <el-tab-pane label="分品牌统计" name="second">
+          <section class="col-md-12">
+            <div class="col-md-12 form-group well" style="width: 100%;padding:0;" :style="heightselect1">
+              <el-col :span="6" style="margin-top: 10px;height: 40px;">
+                <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                  <el-form-item label="下单时间" clearable prop="typeId">
+                    <el-date-picker  v-model="selectbrand.date" type="daterange" clearable @change="changeItem" align="right" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :picker-options="pickerOptions2" value-format="yyyy-MM-dd" :style="width1">
+                    </el-date-picker>
+                  </el-form-item>
+                </el-form>
+              </el-col>
+            </div>
+          </section>
+          <section class="col-md-12" style="padding: 0;">
+            <div class="col-md-12">
+              <el-table ref="multipleTable" :data="brandtableData" tooltip-effect="dark" :default-sort = "{prop: 'date', order: 'descending'}" style="width: 100%" :max-height="tableHeight">
+                <el-table-column sortable prop="cinvcname" fixed label="品牌名称" min-width="120"></el-table-column>
+                <el-table-column sortable prop="customerCount" label="客户数" min-width="120" show-overflow-tooltip></el-table-column>
+                <el-table-column sortable prop="orderCount" label="订单数" min-width="120"></el-table-column>
+                <el-table-column sortable prop="isum" label="出库金额" min-width="120">
+                  <template scope="scope">
+                    <span>{{toThousands(scope.row.isum?scope.row.isum:0,2)}}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column sortable label="客均订单数" min-width="120">
+                  <template scope="scope">
+                    <span>{{((scope.row.orderCount?scope.row.orderCount:0)/(scope.row.customerCount?scope.row.customerCount:0)).toFixed(2)}}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column sortable label="客均出库金额" min-width="120">
+                  <template scope="scope">
+                    <span>{{toThousands(scope.row.isum/scope.row.customerCount,2)}}</span>
+                  </template></el-table-column></el-table-column>
+              </el-table>
+            </div>
+            <div class="col-md-12 block" style="float:right;">
+                <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage" :page-sizes="[10, 50, 100, 200]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper" :total="total"  style="float: right;margin-top:10px;">
+                </el-pagination>
+              </div>
+          </section>
+        </el-tab-pane>
+        <el-tab-pane label="分月份统计" name="third">
+          <section class="col-md-12">
+            <div class="col-md-12 form-group well" style="width: 100%;padding:0;" :style="heightselect1">
+              <el-col :span="6" style="margin-top: 10px;height: 40px;">
+                <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                  <el-form-item label="下单时间" clearable prop="typeId">
+                      <el-date-picker v-model="selectmonth.startdate" type="month" clearable @change="changeItem" placeholder="开始月" value-format="yyyy-MM" :style="width2"></el-date-picker>
+                      <el-date-picker v-model="selectmonth.enddate" type="month" clearable @change="changeItem" placeholder="截止月" value-format="yyyy-MM" :style="width2"></el-date-picker>
+                  </el-form-item>
+                </el-form>
+              </el-col>
+            </div>
+          </section>
+          <section class="col-md-12" style="padding: 0;">
+            <div class="col-md-12">
+              <el-table ref="multipleTable" :data="monthtableData" tooltip-effect="dark" :default-sort = "{prop: 'date', order: 'descending'}" style="width: 100%" :max-height="tableHeight">
+                <el-table-column sortable prop="ddate" fixed label="月份" min-width="120"></el-table-column>
+                <el-table-column sortable prop="customerCount" label="交易客户数" min-width="120" show-overflow-tooltip></el-table-column>
+                <el-table-column sortable prop="orderCount" label="订单数" min-width="120"></el-table-column>
+                <el-table-column sortable prop="isum" label="出库金额" min-width="120">
+                  <template scope="scope">
+                    <span>{{toThousands(scope.row.isum,2)}}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column sortable label="客均订单数" min-width="120">
+                  <template scope="scope">
+                    <span>{{toThousands(scope.row.orderCount/scope.row.customerCount,2)}}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column sortable label="客均出库金额" min-width="120">
+                  <template scope="scope">
+                    <span>{{toThousands(scope.row.isum/scope.row.customerCount,2)}}</span>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+            <div class="col-md-12 block" style="float:right;">
+              <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage" :page-sizes="[10, 50, 100, 200]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper" :total="total"  style="float: right;margin-top:10px;">
+              </el-pagination>
+            </div>
+          </section>
+        </el-tab-pane>
+        <el-tab-pane label="分客户统计" name="fourth">
+          <section class="col-md-12">
+            <div class="col-md-12 form-group well" style="width: 100%;padding:0;" :style="heightselect1">
+              <el-col :span="6" style="margin-top: 10px;height: 40px;">
+                <el-form :model="form" label-width="90px" class="demo-ruleForm">
+                  <el-form-item label="客户名称" prop="typeId">
+                    <el-input v-model="selectclient.customerName" auto-complete="off" clearable @change="changeItem":style="width1"></el-input>
+                  </el-form-item>
+                </el-form>
+              </el-col>
+              <el-col :span="6" style="margin-top: 10px;height: 40px;">
+                <el-form :model="form" label-width="90px" class="demo-ruleForm">
+                  <el-form-item label="品牌" prop="typeId">
+                    <el-select v-model="selectclient.brand" placeholder="请选择" @change="changeItem" clearable :style="width1">
+                      <el-option v-for="item in crmsbrand" :label="item.typename" :value="item.typecode"></el-option>
+                    </el-select>
+                  </el-form-item>
+                </el-form>
+              </el-col>
+              <el-col :span="6" style="margin-top: 10px;height: 40px;">
+                <el-form :model="form" label-width="90px" class="demo-ruleForm">
+                  <el-form-item label="下单时间" clearable prop="typeId">
+                    <el-date-picker  v-model="selectclient.date" type="daterange" clearable @change="changeItem" align="right" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :picker-options="pickerOptions2" value-format="yyyy-MM-dd" :style="width1">
+                    </el-date-picker>
+                  </el-form-item>
+                </el-form>
+              </el-col>
+            </div>
+          </section>
+          <section class="col-md-12" style="padding: 0;">
+            <div class="col-md-12">
+              <el-table ref="multipleTable" :data="clienttableData" tooltip-effect="dark" :default-sort = "{prop: 'date', order: 'descending'}" style="width: 100%" :max-height="tableHeight">
+                <el-table-column sortable prop="name" fixed label="客户名称" min-width="120"></el-table-column>
+                <el-table-column sortable prop="cinvcname" label="合作品牌" min-width="120" show-overflow-tooltip>
+                  <template scope="scope">
+                    <span style="color: #008cee;cursor: pointer;" @click="handleEdit(scope.row.cinvcname,scope.row.name)">{{scope.row.cinvcname?scope.row.cinvcname:'--'}}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column sortable prop="iquantity" label="出库数量" min-width="120">
+                  <template scope="scope">
+                    <span>{{toThousands(scope.row.iquantity,2)}}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column sortable prop="isum" label="出库金额"  min-width="120">
+                  <template scope="scope">
+                    <span>{{toThousands(scope.row.isum,2)}}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column sortable prop="lastOrderDate" :formatter="dateFormat" label="最后下单日期" min-width="120"></el-table-column>
+                <el-table-column sortable prop="orderCount" label="订单数" min-width="120"></el-table-column>
+              </el-table>
+            </div>
+            <div class="col-md-12 block" style="float:right;">
+              <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage" :page-sizes="[10, 50, 100, 200]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper" :total="total"  style="float: right;margin-top:10px;">
+              </el-pagination>
+            </div>
+          </section>
+        </el-tab-pane>
+      </el-tabs>
+    </section>
+    <el-dialog title="出库单" :visible.sync="outboundOrder" width="80%" style="display:none;">
+      <div class="col-md-12" style="margin-bottom:20px;">
+        <el-table ref="multipleTable" v-loading="loading" :data="outboundtableData" tooltip-effect="dark" :default-sort = "{prop: 'date', order: 'descending'}" style="width: 100%" :max-height="tableHeight">
+          <el-table-column sortable prop="id" fixed label="客户编码" min-width="120"></el-table-column>
+          <el-table-column sortable prop="name" label="客户名称" min-width="120" show-overflow-tooltip></el-table-column>
+          <el-table-column sortable prop="cinvcode" label="库存编码" min-width="120"></el-table-column>
+          <el-table-column sortable prop="cinvname" label="库存名称" min-width="120"></el-table-column>
+          <el-table-column sortable prop="cinvcname" label="品牌" min-width="120"></el-table-column>
+          <el-table-column sortable prop="iquantity" label="出库数量" min-width="120">
+            <template scope="scope">
+              <span>{{toThousands(scope.row.iquantity,1)}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column sortable prop="isum" label="出库金额" min-width="120">
+            <template scope="scope">
+              <span>{{toThousands(scope.row.isum,2)}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column sortable prop="ccode" label="出库单号" min-width="160"></el-table-column>
+          <el-table-column sortable prop="output_date" label="出库日期" :formatter="dateFormat" min-width="120"></el-table-column>
+          <el-table-column sortable prop="csocode" label="销售订单号" min-width="140"></el-table-column>
+          <el-table-column sortable prop="ddate" label="下单日期" :formatter="dateFormat" min-width="120"></el-table-column>
+        </el-table>
+        <div class="col-md-12 block" style="float:right;">
+          <el-pagination @size-change="handleSizeChangeout" @current-change="handleCurrentChangeout" :current-page="currentPage" :page-sizes="[10, 50, 100, 200]" :page-size="pageSizeout" layout="total, sizes, prev, pager, next, jumper" :total="totalout"  style="float: right;margin-top:10px;">
+          </el-pagination>
+        </div>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="outboundOrder = false">退 出</el-button>
+      </div>
+    </el-dialog>
+  </div>
+  <script src="../../dist/js/vue.js"></script>
+  <script src="../../dist/js/index.js"></script>
+  <script src="../../plugins/jQuery/jquery-2.2.3.min.js"></script>
+  <script src="../../bootstrap/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
+  <script src="../../dist/js/moment.js"></script>
+<script src="../../dist/js/Itemquery.js?rev=e921d453dc12d6990d340d9fbbd38077"></script>
+</body>
+</html>

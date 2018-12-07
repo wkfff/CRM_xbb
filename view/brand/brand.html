@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>润合美CRM系统</title>
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <link rel="stylesheet" href="../../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-ui@2.4.6/lib/theme-chalk/index.css">
+  <link rel="stylesheet" href="../../dist/css/enterprise.css?rev=d90f4c5bcc4b672da3deebb0c94a1597">
+</head>
+ <body>
+  <div id="app" v-cloak> 
+    <section class="top" style="z-index: 10;">
+      <h1 class="title"> 
+        <span>品牌合作机会</span>
+      </h1>
+      <div class="search">
+          <el-button type="primary" @click="addNewbrand">新建</el-button>
+      </div>
+    </section>
+    <section class="col-md-12">
+      <div style="padding: 0;margin-top: 60px;">
+        <div class="col-md-12 form-group well" style="width: 98%;margin-left: 1%;" :style="heightselect">
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="品牌机会名称" prop="typeId">
+                  <el-input v-model="select.brand_name" auto-complete="off" clearable @change="change" class="brand" :style="width1"></el-input>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+              <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="客户名称" prop="typeId">
+                    <el-input v-model="select.customer_name" auto-complete="off" clearable @change="change" class="brand" :style="width1"></el-input>
+                </el-form-item>
+              </el-form>
+            </el-col>
+          <!-- <el-col :span="6" style="margin-top: 10px;">
+            <el-col :span="11">
+              <div class="block" style="margin-left: 14px;">
+                  <span class="demonstration">年度</span>
+                  <el-date-picker  v-model="select.last_purchase_date_start" type="year" @change="change" align="right" unlink-panels :style="width1"">
+                  </el-date-picker>
+                </div>
+            </el-col>
+            <el-col :span="12" style="margin-left: -70px;">
+              <div class="block" style="margin-left: 40px;">
+                  <span class="demonstration">-</span>
+                  <el-date-picker  v-model="select.last_purchase_date_end" type="year" @change="change" align="right" unlink-panels :style="width1">
+                  </el-date-picker>
+                </div>
+            </el-col>
+          </el-col>
+          <el-col :span="5" style="margin-top: 10px;height: 40px;">
+              <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="预计金额" prop="typeId">
+                    <el-input v-model="select.number_of_purchases_start" placeholder="开始进货" auto-complete="off" class="brand" @change="change" :style="width2" ></el-input>
+                    <span style="margin:0 8px;">-</span>
+                    <el-input v-model="select.number_of_purchases_end" placeholder="截止进货" auto-complete="off" class="brand" @change="change" :style="width2"></el-input>
+                </el-form-item>
+              </el-form>
+            </el-col>
+          </el-col> -->
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+              <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="预计金额" prop="typeId">
+                    <el-input v-model="select.estimated_amount_start" placeholder="开始进货金额" clearable auto-complete="off" class="brand" @change="change" :style="width2" ></el-input>
+                    <span>-</span>
+                    <el-input v-model="select.estimated_amount_end" placeholder="截止进货金额" clearable auto-complete="off" class="brand" @change="change" :style="width2"></el-input>
+                </el-form-item>
+              </el-form>
+            </el-col>
+          </el-col>
+          <el-col :span="5" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="销售阶段" prop="typeId">
+                    <el-select v-model="select.sales_stage" placeholder="请选择" clearable @change="change" :style="width1">
+                        <el-option v-for="item in crmssaleChance" :label="item.typename" :value="item.typename"></el-option>
+                    </el-select>
+                </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="5" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="重要程度" prop="typeId">
+                    <el-select v-model="select.degree_of_importance" clearable placeholder="请选择" @change="change" :style="width1">
+                        <el-option v-for="item in importance" :label="item.typename" :value="item.id"></el-option>
+                    </el-select>
+                </el-form-item>
+            </el-form>
+          </el-col>
+        </div>
+      </div>
+    </section>
+    <section class="col-md-12" style="padding: 0;">
+      <div class="col-md-12">
+        <el-col :span="24">
+          <el-popover placement="bottom" width="300" trigger="click">
+            <el-col :span="12"><el-checkbox v-model="amount" @change="showHide('show_amount')">预计金额</el-checkbox></el-col>
+            <el-col :span="12"><el-checkbox v-model="brandimportance" @change="showHide('show_importance')">重要程度</el-checkbox></el-col>
+            <el-col :span="12"><el-checkbox v-model="principal" @change="showHide('show_principal')">我方负责人</el-checkbox></el-col>
+            <el-col :span="12"><el-checkbox v-model="policymaker" @change="showHide('show_policymaker')">对方决策人</el-checkbox></el-col>
+            <el-col :span="12"><el-checkbox v-model="showfollow" @change="showHide('show_follow')">跟进时间</el-checkbox></el-col>
+            <el-col :span="12"><el-checkbox v-model="purchases" @change="showHide('show_purchases')">预计合作时间</el-checkbox></el-col>
+            <el-button slot="reference" type="primary" icon="el-icon-setting" class="setting">设置</el-button>
+          </el-popover>
+        </el-col>
+        <el-table ref="multipleTable" :data="tableData" tooltip-effect="dark" :default-sort = "{prop: 'date', order: 'descending'}" style="width: 100%" :max-height="tableHeight">
+          <el-table-column  sortable label="品牌名称" show-overflow-tooltip fixed >
+            <template scope="scope">
+              <span style="color: #008cee;cursor: pointer;"  @click="handleEdit(scope.row.id,scope.row.brand_name)">{{scope.row.brand_name}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column  sortable prop="customer_name" label="客户名称" show-overflow-tooltip fixed></el-table-column>
+          <el-table-column  sortable prop="brand_plan_code" label="品牌机会编号" show-overflow-tooltip fixed></el-table-column>
+          <el-table-column  sortable prop="estimated_amount" label="预计金额" v-if="show_amount"></el-table-column>
+          <el-table-column  sortable prop="sales_stage" label="销售阶段"></el-table-column>
+          <el-table-column  sortable prop="degree_of_importance" :formatter="importanceColumn" label="重要程度" v-if="show_importance"></el-table-column>
+          <el-table-column  sortable prop="principal_name" label="我方负责人" v-if="show_principal"></el-table-column>
+          <el-table-column  sortable prop="policymaker" label="对方决策人" v-if="show_policymaker"></el-table-column>
+          <el-table-column  sortable prop="last_follow_up_date" :formatter="dateFormat" label="最后跟进时间" v-if="show_follow"></el-table-column>
+          <el-table-column  sortable prop="number_of_purchases" :formatter="dateFormat" label="预计合作时间" v-if="show_purchases"></el-table-column>
+        </el-table>
+      </div>
+      <div class="col-md-12 block" style="float:right;">
+          <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage" :page-sizes="[10, 50, 100, 200]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper" :total="total"  style="float: right;margin-top:10px;">
+          </el-pagination>
+        </div>
+    </section>
+    <!--新建品牌合作机会-->
+    <el-dialog :title="title_brand[BrandStatus]" :visible.sync="dialogCostoms" style="display:none;">
+      <el-form :model="brand" :rules="rules" @submit.prevent="submit">
+        <el-form-item label="品牌机会名称" :label-width="formLabelWidth" prop="brand_name">
+          <el-input v-model="brand.brand_name" auto-complete="off" class="clientName"></el-input>
+        </el-form-item>
+        <el-form-item label="品牌计划编号" :label-width="formLabelWidth">
+          <el-input v-model="brand.brand_plan_code" auto-complete="off" :disabled="true"></el-input>
+        </el-form-item>
+        <el-form-item label="客户名称" :label-width="formLabelWidth" prop="customer_id">
+            <el-select v-model="brand.customer_id" filterable style="width:100%;" @change="policymaker(brand.customer_id)">
+              <el-option v-for="item in clientDetail" :label="item.name" :value="item.id"></el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item label="我方负责人" :label-width="formLabelWidth" prop="principal_id">
+          <el-select v-model="brand.principal_id" filterable placeholder="请选择"  style="width:100%;border-radius: 0 5px 5px 0;" >
+            <el-option v-for="item in options1" :key="item.id" :label="item.firstname" :value="item.id"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="对方决策人" :label-width="formLabelWidth" prop="policymaker_id">
+          <el-select v-model="brand.policymaker_id" filterable placeholder="请选择"  style="width:100%;border-radius: 0 5px 5px 0;" >
+            <el-option v-for="item in customerDetail" :key="item.id" :label="item.name" :value="item.id"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="销售阶段" :label-width="formLabelWidth" prop="sales_stage">
+            <el-select v-model="brand.sales_stage" placeholder="请选择" style="width:100%;">
+                <el-option v-for="item in crmssaleChance" :label="item.typename" :value="item.typename" :disabled="item.disabled"></el-option>
+            </el-select>
+        </el-form-item>
+        <el-form-item label="重要程度" :label-width="formLabelWidth" prop="degree_of_importance">
+          <el-rate v-model="brand.degree_of_importance" :colors="['#99A9BF', '#F7BA2A', '#FF9900']" style="margin-top:10px;"></el-rate>
+        </el-form-item>
+        <el-form-item label="预计金额" :label-width="formLabelWidth" prop="estimated_amount">
+          <el-input v-model.number="brand.estimated_amount" auto-complete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="预计合作时间" :label-width="formLabelWidth">
+          <el-date-picker v-model="brand.plan_cooperation_date" type="datetime" placeholder="选择日期时间" align="right" :picker-options="pickerOptions1" style="width:100%;">
+          </el-date-picker>
+        </el-form-item>
+        <el-form-item label="最后跟进时间" :label-width="formLabelWidth" prop="last_follow_up_date">
+          <el-date-picker v-model="brand.last_follow_up_date" type="datetime" placeholder="选择日期时间" align="right" :picker-options="pickerOptions1" style="width:100%;">
+          </el-date-picker>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogCostoms = false">取 消</el-button>
+        <el-button type="primary" @click="dialogAdd">确 定</el-button>
+      </div>
+    </el-dialog>
+    <!--弹出品牌机会详情-->
+    <div class="detail-bg" style="z-index:200;"></div>
+    <div class="detail" :style="width" style="z-index:2000;">
+      <el-col :span="1">
+        <div class="cancel">
+            <span class="fa fa-close" style="font-size: 25px;line-height: 40px;"></span>
+        </div>
+      </el-col>
+      <el-col :span="23">
+        <div class="main">
+          <div class="col-md-12 head">
+            <el-col :span="18" style="line-height: 80px;font-size: 25px;color: #ff6100;">
+              <span>{{brandShow.brand_name?brandShow.brand_name:'-'}}</span>
+            </el-col>
+            <el-col :span="6">
+              <el-row style="line-height: 80px;float: right;">
+                <el-button type="primary" icon="el-icon-edit" circle @click="editBrand(brandShow.id)"></el-button>
+                <el-button type="danger" icon="el-icon-delete" circle @click="deleteBrand(brandShow.id)"></el-button>
+              </el-row>
+            </el-col>
+          </div>
+          <div class="col-md-12 title_detail">
+            <span>品牌机会编号:</span>
+            <span>{{brandShow.brand_plan_code?brandShow.brand_plan_code:'-'}}</span>
+            <span style="margin:0 5px 0 5px;color: #afafaf;">|</span>
+            <span>最后跟进时间:</span>
+            <span>{{brandShow.last_follow_up_date?moment(brandShow.last_follow_up_date.time).format("YYYY-MM-DD"):'-'}}</span>
+          </div>
+          <el-col :span="24">
+            <el-col :span="24" class="col-md-12">
+              <el-col :span="7">
+                <el-col :span="24" style="margin-top:10px;">
+                  <el-col :span="23" class="saleteam">基本资料</el-col>
+                  <el-col :span="24" class="saleresponsible" v-bind:class="{ 'class-a': isA, 'class-b': isB }">
+                    <ul>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail" style="overflow:hidden;">名称：</el-col> 
+                        <el-col :span="16" class="text">{{brandShow.brand_name?brandShow.brand_name:'-'}}</el-col>
+                      </li>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail" style="overflow:hidden;">机会编号：</el-col> 
+                        <el-col :span="16" class="text">{{brandShow.brand_plan_code?brandShow.brand_plan_code:'-'}}</el-col>
+                      </li>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail">预计金额：</el-col> 
+                        <el-col :span="16" class="text">{{brandShow.estimated_amount?brandShow.estimated_amount:'-'}}</el-col>
+                      </li>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail">客户名称：</el-col>
+                        <el-col :span="16" class="text">{{brandShow.customer_name?brandShow.customer_name:'-'}}</el-col>
+                      </li>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail">我方负责人：</el-col>
+                        <el-col :span="16" class="text">{{brandShow.principal_name?brandShow.principal_name:'-'}}</el-col>
+                      </li>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail">对方决策人：</el-col>
+                        <el-col :span="16" class="text">{{brandShow.policymaker?brandShow.policymaker:'-'}}</el-col>
+                      </li>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail">联系方式：</el-col>
+                        <el-col :span="16" class="text">{{brandShow.contact_way?customerWay(brandShow.contact_way):'-'}}</el-col>
+                      </li>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail">钉钉号：</el-col>
+                        <el-col :span="16" class="text">{{brandShow.ding_num?brandShow.ding_num:'-'}}</el-col>
+                      </li>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail">微信号：</el-col>
+                        <el-col :span="16" class="text">{{brandShow.wx_num?brandShow.wx_num:'-'}}</el-col>
+                      </li>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail">微信昵称：</el-col>
+                        <el-col :span="16" class="text">{{brandShow.wx_name?brandShow.wx_name:'-'}}</el-col>
+                      </li>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail">QQ号：</el-col>
+                        <el-col :span="16" class="text">{{brandShow.qq?brandShow.qq:'-'}}</el-col>
+                      </li>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail">邮箱：</el-col>
+                        <el-col :span="16" class="text">{{brandShow.email?brandShow.email:'-'}}</el-col>
+                      </li>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail">销售阶段：</el-col> 
+                        <el-col :span="16" class="text">{{brandShow.sales_stage?brandShow.sales_stage:'-'}}</el-col>
+                      </li>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail">重要程度：</el-col>
+                        <el-col :span="16" class="text">
+                            <el-rate v-model="brandShow.degree_of_importance" :colors="['#99A9BF', '#F7BA2A', '#FF9900']" disabled></el-rate>
+                        </el-col>
+                      </li>
+                      <li class="item item_top">
+                        <el-col :span="8" class="saledetail">合作时间：</el-col> 
+                        <el-col :span="16" class="text">{{brandShow.plan_cooperation_date?moment(brandShow.plan_cooperation_date.time).format("YYYY-MM-DD"):'-'}}</el-col>
+                      </li>
+                    </ul>
+                  
+                  </el-col>
+                </el-col>
+              </el-col>
+              <el-col :span="17">
+                <el-steps :active="1" simple>
+                    <el-breadcrumb separator-class="el-icon-arrow-right" style="height: 40px;line-height: 40px;width: 100%;">
+                        <el-breadcrumb-item :to="{ path: '/' }" v-for="item in crmssaleChance" style="width:12.5%;text-align:center;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;" >
+                          <span @click="upChance(brandShow.id,item.typename)" v-if="item.typename == brandShow.sales_stage" style="color:dodgerblue;">{{item.typename}}</span>
+                          <span @click="upChance(brandShow.id,item.typename)" v-else="item.typename == brandShow.sales_stage" >{{item.typename}}</span>
+                        </el-breadcrumb-item>
+                    </el-breadcrumb>
+                </el-steps>
+                <el-tabs v-model="activeName" @tab-click="handleClick">
+                  <el-tab-pane label="跟进记录" name="first">
+                    <el-col :span="24" style="height: auto; background: #f5f9ff; padding-bottom: 20px;">
+                      <el-col :span="12" style="margin-top: 10px;height: 40px;">
+                          <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                              <el-form-item label="联系人" prop="typeId">
+                                  <!-- <el-select v-model="records.contacts_id" placeholder="请选择">
+                                      <el-option v-for="item in customerDetail" :label="item.name" :value="item.id"></el-option>
+                                  </el-select> -->
+                                  <span>{{brandShow.policymaker?brandShow.policymaker:'-'}}</span>
+                              </el-form-item>
+                          </el-form>
+                        </el-col>
+                        <el-col :span="12" style="margin-top: 10px;height: 40px;">
+                          <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                              <el-form-item label="跟进方式" prop="typeId">
+                                  <el-select v-model="records.follow_up_way" placeholder="请选择" :style="width1">
+                                      <el-option v-for="item in visit" :label="item.typename" :value="item.typename"></el-option>
+                                  </el-select>
+                              </el-form-item>
+                          </el-form>
+                        </el-col>
+                        <el-col :span="12" style="margin-top: 10px;height: 40px;">
+                          <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                              <el-form-item label="跟进机会" prop="typeId">{{brandShow.brand_name}}</el-form-item>
+                          </el-form>
+                        </el-col>
+                        <el-col :span="12" style="margin-top: 10px;height: 40px;">
+                            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                                <el-form-item label="跟进时间" prop="typeId">
+                                  <el-date-picker v-model="records.follow_up_on_date" type="datetime" placeholder="选择日期时间" :style="width1"></el-date-picker>
+                                </el-form-item>
+                            </el-form>
+                          </el-col>
+                        <el-col :span="24" style="margin-top: 10px;height: 40px;">
+                          <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                              <el-form-item label="跟进描述" prop="typeId">
+                                  <el-input type="textarea" v-model="records.remark" style="width: 91%;"></el-input>
+                              </el-form-item>
+                          </el-form>
+                        </el-col>
+                        <el-col :span="24" style="margin-top: 20px;height: 40px;">
+                            <button type="button" class="el-button el-button--primary el-button--small" @click="addfollow" style="float: right;margin-right: 35px;">添加</button>
+                        </el-col>
+                    </el-col>
+                    <el-col :span="24" style="height: 460px;overflow: auto;">
+                      <ul>
+                        <li class="item followData" v-for="(item,index) in followData" style="display: flow-root;">
+                          <div class="infos folowCard" style="height:86px;">
+                            <div class="user">
+                              <a class="text">{{item.customer_name?item.customer_name:'-'}}</a>
+                              <span  class="tag">{{item.follow_up_way}}</span>
+                              <div class="triangle">
+                                <span class="fa fa-check triangle_font"></span>
+                              </div>
+                              <span>拜访时间：{{item.follow_up_on_date?moment(item.follow_up_on_date.time).format("YYYY-MM-DD HH:mm"):'-'}}</span>
+                              <button type="button" class="el-button el-button--primary el-button--small show" @click="showToggle(index,item.id)" style="float: right;margin-top: 5px;margin-right: 35px;">展示评论信息</button>
+                            </div>
+                            <p class="phone"  style="white-space: nowrap;text-overflow:ellipsis; overflow:hidden;">跟进描述:{{item.remark}}</p>
+                            <el-col class="followInfo" style="width: 98%; margin-left: 1%;">
+                                <el-input type="textarea" :autosize="{ minRows: 2, maxRows: 4}"  placeholder="请输入内容" v-model="textarea.context"></el-input>
+                                <button type="button" class="el-button el-button--primary el-button--small" @click="comment(item.id)" style="float: right;margin-top: 5px;margin-right: 35px;">评论</button>
+                                <el-col style="height:auto;overflow:auto;">
+                                  <ul>
+                                    <li class="item commentInfo" v-for="item in commentInfo">
+                                      <div class="infos folowCard" style="height:100px;">
+                                        <div class="user">
+                                          <span style="margin-right:15px;">{{item.user_name}}</span>
+                                          <span>拜访时间：{{item.create_date?moment(item.create_date.time).format("YYYY-MM-DD HH:mm"):'-'}}</span>
+                                        </div>
+                                        <p class="phone"  style="white-space: nowrap;text-overflow:ellipsis; overflow:hidden;">{{item.context}}</p> 
+                                      </div>
+                                    </li>
+                                  </ul>
+                                </el-col>
+                            </el-col>
+                          </div>
+                        </li>
+                      </ul>
+                    </el-col>
+                  </el-tab-pane>
+                </el-tabs>
+            </el-col>
+          </el-col>
+        </div>
+      </el-col>
+    </div>
+  </div>
+<script src="../../dist/js/vue.js"></script>
+<script src="../../dist/js/index.js"></script>
+<script src="../../plugins/jQuery/jquery-2.2.3.min.js"></script>
+<script src="../../bootstrap/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
+<script src="../../dist/js/moment.js"></script>
+<script src="../../dist/js/brand.js?rev=1e7ef96f452eab933136b6e06d9d4430"></script>
+</body>
+</html>

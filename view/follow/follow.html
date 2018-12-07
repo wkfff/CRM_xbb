@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html style="overflow: hidden;">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>润合美CRM系统</title>
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <link rel="stylesheet" href="../../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-ui@2.4.6/lib/theme-chalk/index.css">
+  <link rel="stylesheet" href="../../dist/css/enterprise.css?rev=d90f4c5bcc4b672da3deebb0c94a1597">
+</head>
+ <body>
+   <div id="app" v-cloak>
+    <section class="top" style="z-index:10;">
+      <h1 class="title">
+        <span>跟进记录</span>
+        <span style="margin-left: 14px;font-size: 12px;">记录条数<strong style="color:brown">({{tableData.length}})</strong></span>
+      </h1>
+      <div class="search">
+          <el-button type="primary" @click="newfollow">新建</el-button>
+      </div>
+    </section>
+    <section class="col-md-12" style="padding: 0;">
+      <el-col class="col-md-12" style="padding: 0;margin-top: 60px;">
+        <div class="col-md-12 form-group well" style="width: 98%;margin-left: 1%;" :style="heightselect">
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="拜访方式" prop="typeId">
+                <el-select v-model="select.follow_up_way"  @change="change" clearable :style="width1">
+                    <el-option v-for="item in visit" :label="item.typename" :value="item.typename"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="跟进时间" prop="typeId">
+                    <el-date-picker  v-model="select.follow_up_on_date" type="daterange" @change="change" clearable align="right" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" :picker-options="pickerOptions2" :style="width1">
+                      </el-date-picker>
+                </el-form-item>
+            </el-form>
+          </el-col>
+        </div>
+      </el-col>
+      <el-col :span="24">
+        <el-col :span="6" :style="height" class="follow">
+          <ul>
+              <li class="item tableData" v-for="(item,index) in tableData">
+                <div class="infos folowCard" @click="showFollow(item.id,index)" style="height:100px;">
+                  <div class="user">
+                    <a class="text">{{item.customer_name?item.customer_name:'-'}}</a>
+                    <span  class="tag">{{item.follow_up_way}}</span>
+                    <div class="triangle"  v-bind:style="'display:'+(index==0?'block':'none')">
+                      <span class="fa fa-check triangle_font"></span>
+                    </div>
+                  </div>
+                  <div style="margin-left: 30px; margin-top: -6px;">
+                    <span>拜访时间：{{item.follow_up_on_date?moment(item.follow_up_on_date.time).format("YYYY-MM-DD HH:mm"):'-'}}</span>
+                  </div>
+                  <p class="phone"  style="white-space: nowrap;text-overflow:ellipsis; overflow:hidden;">跟进描述:{{item.remark}}</p> 
+                </div>
+              </li>
+          </ul>
+        </el-col>
+        <el-col :span="14" class="follow">
+          <div class="infos folowCard" style="height:110px;" v-if="followInfo!=''">
+            <div class="user">
+              <a class="text">{{followInfo.customer_name?followInfo.customer_name:''}}</a>
+              <span  class="tag">{{followInfo.follow_up_way?followInfo.follow_up_way:''}}</span>
+              <span>拜访时间：{{followInfo.follow_up_on_date?moment(followInfo.follow_up_on_date.time).format("YYYY-MM-DD HH:mm"):'-'}}</span>
+              <el-col :span="4" style="display:inherit;float:right">
+                  <span class="followdel" @click="followdel(followInfo.id?followInfo.id:'')">删除</span>
+                  <span  class="followedit" @click="followedit(followInfo.id?followInfo.id:'')">修改</span>
+              </el-col>
+            </div>
+            <el-col :span="24" style="height:40px;overflow: auto;">
+              <span style="word-wrap: break-word;width:100%;margin-left: 30px;">跟进描述:{{followInfo.remark?followInfo.remark:''}}</span>
+            </el-col>
+          </div>
+          <!--更近记录提交-->
+          <el-col style="width: 98%; margin-left: 1%;">
+              <el-input type="textarea" :autosize="{ minRows: 2, maxRows: 4}"  placeholder="请输入内容" v-model="textarea.context"></el-input>
+              <button type="button" class="el-button el-button--primary el-button--small" @click="comment(followInfo.id?followInfo.id:'')" style="float: right;margin-top: 5px;margin-right: 35px;">评论</button>
+              <el-col :style="heightcomment">
+                  <ul>
+                      <li class="item commentInfo" v-for="item in commentInfo">
+                        <div class="infos folowCard" style="height:100px;">
+                          <div class="user">
+                            <span>{{item.user_name}}</span>
+                          </div>
+                          <div style="margin-left: 30px; margin-top: -6px;">
+                            <span>拜访时间：{{item.create_date?moment(item.create_date.time).format("YYYY-MM-DD HH:mm"):'-'}}</span>
+                          </div>
+                              <p class="phone"  style="white-space: nowrap;text-overflow:ellipsis; overflow:hidden;">{{item.context}}</p> 
+                        </div>
+                      </li>
+                  </ul>
+              </el-col>
+          </el-col>
+        </el-col>
+        <el-col :span="4" style="margin:auto;" class="follow">
+          <el-col :span="24">
+              <div class="follow_detail">基本信息</div>
+              <el-col :span="24" style="padding-left:15px;">
+                <el-col :span="24">
+                    <el-col :span="24" style="margin:5px 0;">客户名称：</el-col> 
+                    <el-col :span="24" class="text">{{followInfo.customer_name?followInfo.customer_name:'-'}}</el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="24" style="margin:5px 0;">联系人：</el-col> 
+                    <el-col :span="24" class="text">{{followInfo.contacts_name?followInfo.contacts_name:'-'}}</el-col>
+                </el-col>
+              </el-col>
+          </el-col>
+          <el-col :span="24" style="margin-top:10px;">
+            <div class="follow_detail">系统信息</div>
+            <el-col :span="24" style="padding-left:15px;">
+              <el-col :span="24">
+                  <el-col :span="24" style="margin:5px 0;">拜访时间：</el-col> 
+                  <el-col :span="24" class="text">{{followInfo.follow_up_on_date?moment(followInfo.follow_up_on_date.time).format("YYYY-MM-DD HH:mm:ss"):'-'}}</el-col>
+              </el-col>
+              <el-col :span="24">
+                  <el-col :span="24" style="margin:5px 0;">创建时间：</el-col> 
+                  <el-col :span="24" class="text">{{followInfo.create_date?moment(followInfo.create_date.time).format("YYYY-MM-DD HH:mm:ss"):'-'}}</el-col>
+              </el-col>
+          </el-col>   
+        </el-col>
+      </el-col>
+    </section>
+    <!--新增跟进记录、编辑跟进记录的通用编辑-->
+    <el-dialog :title="title_follow[FollowStatus]" :visible.sync="dialogCostoms">
+      <el-form :model="form" @submit.prevent="submit">
+        <el-form-item label="客户名称" :label-width="formLabelWidth">
+          <el-select v-model="records.customer_id" filterable clearable placeholder="请选择" @change="customer"  style="width:100%;">
+            <el-option  v-for="item in clientDetail" :key="item.id" :label="item.name" :value="item.id" ></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="联系人" :label-width="formLabelWidth">
+          <el-select  v-model="records.contacts_id" filterable clearable placeholder="请选择" style="width:100%;">
+            <el-option  v-for="item in customerDetail" :key="item.id" :label="item.name" :value="item.id"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form :model="form" :label-width="formLabelWidth" class="demo-ruleForm">
+          <el-form-item label="跟进方式" :label-width="formLabelWidth">
+              <el-select v-model="records.follow_up_way" style="width:100%;">
+                  <el-option v-for="item in visit" :label="item.typename" :value="item.typename"></el-option>
+              </el-select>
+          </el-form-item>
+        </el-form>
+        <el-form-item label="跟进计划品牌" :label-width="formLabelWidth">
+          <el-select v-model="records.follow_up_plan" filterable placeholder="请选择"  style="width:100%;border-radius: 0 5px 5px 0;" >
+            <el-option v-for="item in branddata" :key="item.id" :label="item.brand_name" :value="item.id"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="跟进时间" :label-width="formLabelWidth">
+          <el-date-picker v-model="records.follow_up_on_date" type="datetime" placeholder="选择日期时间" style="width:100%;"></el-date-picker>
+        </el-form-item>
+        <el-form-item label="领导批示" :label-width="formLabelWidth">
+          <el-input v-model="records.leader_instructions" auto-complete="off"></el-input>
+        </el-form-item>
+        <el-form :model="form" :label-width="formLabelWidth" class="demo-ruleForm">
+            <el-form-item label="跟进备注" prop="typeId">
+                <el-input type="textarea" v-model="records.remark"></el-input>
+            </el-form-item>
+        </el-form>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogCostoms = false">取 消</el-button>
+        <el-button type="primary" @click="followNew">确 定</el-button>
+      </div>
+    </el-dialog>
+  </div>
+<script src="../../dist/js/vue.js"></script>
+<script src="../../dist/js/index.js"></script>
+<script src="../../plugins/jQuery/jquery-2.2.3.min.js"></script>
+<script src="../../bootstrap/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
+<script src="../../dist/js/moment.js"></script>
+<script src="../../dist/js/select-area.js"></script>
+<script src="../../dist/js/follow.js?rev=0b174425189dddf76749111ec318dbf0"></script>
+</body>
+</html>

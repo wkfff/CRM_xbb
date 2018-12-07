@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>润合美CRM系统</title>
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <link rel="stylesheet" href="../../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-ui@2.4.6/lib/theme-chalk/index.css">
+  <link rel="stylesheet" href="../../dist/css/enterprise.css?rev=d90f4c5bcc4b672da3deebb0c94a1597">
+  <link rel="stylesheet" href="../../dist/css/scoller.css?rev=a7760641b986fd3e227a912dbe42b601">
+  <style>
+    .el-form-item__label{color: #fff;}
+    .el-input__inner{width:120px;height: 30px; border: none;}
+    .demo-ruleForm{display: block;float: right; margin-right: 20px;}
+  </style>
+</head>
+ <body>
+  <div id="app"  v-cloak>
+    <section class="top" style="z-index: 10;top:0;">
+      <h1 class="title">
+        <span>首页</span>
+      </h1>
+    </section>
+     <!--当无数据时展示的布局-->
+     <!-- <section v-show="isHide" style="margin-top:60px;height: -webkit-fill-available;" :style="show1" v-loading="loading"></section> -->
+    <!--仪表板展示-->
+    <section class="col-md-12" style="margin-top: 60px;">
+      <el-col :span="18" style="border:1px solid #eee;margin-bottom:10px;">
+        <el-col :span="24" class="fxtital">
+          <span>分销{{groupName}} ({{showQuery}})</span>
+          <el-form :model="form" label-width="100px" class="demo-ruleForm">
+            <el-form-item label="筛选类别：" prop="typeId">
+              <el-select v-model="dashqueryTime.name" placeholder="请选择" @change="dashquerychange">
+                <el-option v-for="item in dashNewTime" :label="item.name" :value="item.value" style="width:120px"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-form>
+        </el-col>
+        <section class="col-md-6" style="padding:0 5px;border-right:1px solid #eee;">
+          <el-col :span="24">
+            <el-col :span="24" class="shape">目标客户数</el-col>
+            <el-col :span="24" style="padding-left:20px;">
+              <el-col :span="10" style="margin-top: 30px;">
+                <el-col :span="24">
+                    <el-col :span="24">目标值</el-col>
+                    <el-col :span="24" class="fxinfo">{{dashboardStatis.dashboard1.target}}</el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="24">已完成</el-col>
+                    <el-col :span="24" class="fxinfo" style="color: #8e74f1;">{{dashboardStatis.dashboard1.accomplish}}</el-col>
+                </el-col>
+              </el-col>
+              <el-col :span="14">
+                  <div id="mychart1" class="echare1" style="border:none;height:328px;"></div>
+              </el-col>
+            </el-col>
+          </el-col>
+        </section>
+        <section class="col-md-6" style="padding:0 5px;">
+          <el-col :span="24">
+            <el-col :span="24" class="shape">目标销售额</el-col>
+            <el-col :span="24" style="padding-left:20px;">
+                <el-col :span="10" style="margin-top: 30px;">
+                <el-col :span="24">
+                    <el-col :span="24">目标值</el-col>
+                    <el-col :span="24" class="fxinfo">{{toThousands(dashboardStatis.dashboard2.target,0)}}</el-col>
+                </el-col>
+                <el-col :span="24">
+                    <el-col :span="24">已完成</el-col>
+                    <el-col :span="24" class="fxinfo" style="color: #8e74f1;">{{toThousands(dashboardStatis.dashboard2.accomplish,0)}}</el-col>
+                </el-col>
+              </el-col>
+              <el-col :span="14">
+                  <div id="fxdashboard2" class="echare1" style="border:none;height:328px;"></div>
+              </el-col>
+            </el-col>
+          </el-col>
+        </section>
+      </el-col>
+      <el-col :span="6">
+        <section class="col-md-12" style="padding:0 5px;">
+          <el-col class="echare2">
+            <el-col :span="24" class="fxtital" style="margin-bottom: 10px;">
+              <span>待办任务</span>
+            </el-col>
+            <el-card class="box-card" style="background: #8e75f1;margin-top:10px;">
+              <div class="text item" style="color:#fff;">
+                <el-col :span="24" class="cardtitle">待联系潜在客户</el-col>
+                <el-col :span="24" style="margin-bottom:20px;">
+                  <div class="col-md-4 cardlist" style="padding:0;">{{dashboardStatis.statistics.stayContact?dashboardStatis.statistics.stayContact:0}}</div>
+                  <div class="col-md-8" style="margin-top: 9px;padding:0;">
+                    <a  v-bind:data-href="[potentialurl]" class="carda" @click="PageTypes(potentialurl,'潜在客户')">查看详情</a>
+                  </div>
+                </el-col>
+              </div>
+            </el-card>
+            <el-card class="box-card" style="background: #67c23a;">
+              <div class="text item" style="color:#fff;">
+                <el-col :span="24" class="cardtitle">今日跟进计划</el-col>
+                <el-col :span="24" style="margin-bottom:20px;">
+                  <div class="col-md-4 cardlist" style="padding:0;">{{dashboardStatis.statistics.todayFollowPlay?dashboardStatis.statistics.todayFollowPlay:0}}</div>
+                  <div class="col-md-8" style="margin-top: 9px;padding:0;">
+                    <a  v-bind:data-href="[visitUrl]" class="carda" @click="PageTypes(visitUrl,'跟进计划')">查看详情</a>
+                  </div>
+                </el-col>
+              </div>
+            </el-card>
+            <el-card class="box-card" style="background: #f17575;">
+              <div class="text item" style="color:#fff;">
+                <el-col :span="24" class="cardtitle">待进货客户</el-col>
+                <el-col :span="24" style="margin-bottom:20px;">
+                  <div class="col-md-4 cardlist" style="padding:0;">{{dashboardStatis.statistics.stayStockClient?dashboardStatis.statistics.stayStockClient:0}}</div>
+                  <div class="col-md-8" style="margin-top: 9px;padding:0;">
+                    <a  v-bind:data-href="[stayeurl]" class="carda" @click="PageTypes(stayeurl,'客户管理')">查看详情</a>
+                  </div>
+                </el-col>
+              </div>
+            </el-card>
+            <el-card class="box-card" style="background: #829292;">
+              <div class="text item" style="color:#fff;">
+                <el-col :span="24" class="cardtitle">低价警报次数</el-col>
+                <el-col :span="24" style="margin-bottom:20px;">
+                  <div class="col-md-4 cardlist" style="padding:0;">{{dashboardStatis.statistics.lowPriceAlarmNum?dashboardStatis.statistics.lowPriceAlarmNum:0}}</div>
+                  <div class="col-md-8" style="margin-top: 9px;padding:0;">
+                    <a  v-bind:data-href="[lowprice]" class="carda" @click="PageTypes(lowprice,'价格报警')">查看详情</a>
+                  </div>
+                </el-col>
+              </el-col>
+            </el-card>
+          </el-col>
+        </section>
+      </el-col>
+    </section>
+    <!--客户数据分析-->
+    <section  class="col-md-12 client" style="margin-top: 20px;">
+      <el-col class="col-md-6" style="padding:0 5px;">
+        <el-col :span="24" style="border:1px solid #eee;padding-bottom: 10px;">
+          <el-col :span="24"  class="fxtital">
+            <span style="padding-left:30px;color:#fff;">客户数据分析</span>
+              <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="筛选时间：" prop="typeId">
+                    <el-date-picker v-model="cusdatafx.time" type="month" placeholder="选择月" value-format="yyyy-MM" @change="changeAnalysis" style="width:120px">
+                  </el-date-picker>
+                </el-form-item>
+              </el-form>
+              <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="筛选条件：" prop="typeId">
+                    <el-select v-model="cusdatafx.conditions" placeholder="请选择" @change="changeAnalysis">
+                        <el-option v-for="item in clientconditions" :label="item.dic_name" :value="item.dic_code" style="width:130px"></el-option>
+                    </el-select>
+                </el-form-item>
+              </el-form>
+              <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="筛选类别：" prop="typeId">
+                  <el-select v-model="custype" placeholder="请选择" @change="changeconditions">
+                    <el-option v-for="item in clientType" :label="item.name" :value="item.code" style="width:120px"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-form>
+              <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="品牌：" prop="typeId">
+                    <el-select v-model="cusdatafx.brand" placeholder="请选择" filterable @change="changeAnalysis">
+                      <el-option v-for="item in crmbrand" :label="item.typename" :value="item.typecode" :key="item.value" style="width:180px;"></el-option>
+                    </el-select>
+                </el-form-item>
+              </el-form>
+          </el-col>
+          <el-col :span="24" style="margin-top:15px;">
+            <el-col :span="2">
+              <el-card class="box-card cardmonth" style="height:250px;">
+                <div class="text item">
+                  <el-col :span="24" class="cardlist" style="color: #409eff;line-height: 90px;">{{clienData.data.cumulative?clienData.data.cumulative:0}}</el-col>
+                  <el-tooltip placement="bottom">
+                    <div slot="content">我负责的品牌有成交的客户总数,一个客户成交多个品牌算多个客户</div>
+                    <el-col :span="24" class="carddetail">客户数总数</el-col>
+                  </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="2">
+              <el-card class="box-card cardmonth" style="height:250px;">
+                <div class="text item">
+                  <el-col :span="24" class="cardlist" style="color: #8e74f1;line-height: 90px;">{{clienData.data.newclient?clienData.data.newclient:0}}</el-col>
+                  <el-tooltip placement="bottom">
+                    <div slot="content">我负责的品牌的客户首次成交日期在当月的客户数</div>
+                    <el-col :span="24" class="carddetail">新增客户数</el-col>
+                  </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="2">
+              <el-card class="box-card cardmonth" style="height:250px;">
+                <div class="text item">
+                    <el-col :span="24" class="cardlist" style="color: #d48164;line-height: 90px;">{{clienData.data.followclient?clienData.data.followclient:0}}</el-col>
+                    <el-tooltip placement="bottom">
+                      <div slot="content">我负责的品牌的合作客户中,当月跟进过的客户数(直接统计到个人)</div>
+                      <el-col :span="24" class="carddetail">跟进客户数</el-col>
+                    </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="2">
+              <el-card class="box-card cardmonth" style="height:250px;">
+                <div class="text item">
+                    <el-col :span="24" class="cardlist" style="color: #409eff;line-height: 90px;">{{clienData.data.clienttotal?clienData.data.clienttotal:0}}</el-col>
+                    <el-tooltip placement="bottom">
+                      <div slot="content">我负责的品牌的合作客户当月所有跟进记录数,一条跟进记录算一次跟进次数</div>
+                      <el-col :span="24" class="carddetail">跟进次数</el-col>
+                    </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="2">
+              <el-card class="box-card cardmonth" style="height:250px;">
+                <div class="text item">
+                  <el-col :span="24" class="cardlist"  style="color: #c33bc5;line-height: 90px;">{{clienData.data.threeclient?clienData.data.threeclient:0}}</el-col>
+                  <el-tooltip placement="bottom">
+                    <div slot="content">从今天开始往前推,我负责的品牌近3月的成交客户数</div>
+                    <el-col :span="24" class="carddetail">近3月成交客户数</el-col>
+                  </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="2">
+              <el-card class="box-card cardmonth" style="height:250px;">
+                <div class="text item">
+                  <el-col :span="24" class="cardlist" style="color: #c33bc5;line-height: 90px;">{{clienData.data.sixclient?clienData.data.sixclient:0}}</el-col>
+                  <el-tooltip placement="bottom">
+                    <div slot="content">从今天开始往前推,我负责的品牌近6月的成交客户数</div>
+                    <el-col :span="24" class="carddetail">近6月成交客户数</el-col>
+                  </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="2">
+              <el-card class="box-card cardmonth" style="height:250px;">
+                <div class="text item">
+                    <el-col :span="24" class="cardlist" style="color: #8e74f1;line-height: 90px;">{{clienData.data.twelveclient?clienData.data.twelveclient:0}}</el-col>
+                    <el-tooltip placement="bottom">
+                      <div slot="content">从今天开始往前推,我负责的品牌近12月的成交客户数</div>
+                      <el-col :span="24" class="carddetail">近12月成交客户数</el-col>
+                    </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="10">
+              <el-card class="box-card cardmonth" style="height:250px; width: 99%; margin-left: 0.5%;">
+                <div class="text item">
+                    <div id="mychartcus"  style="height:350px;"></div>
+                </div>
+              </el-card>
+            </el-col>
+          </el-col>
+        </el-col>
+      </el-col>  
+    </section>
+    <!--客户趋势分析-->
+    <section  class="col-md-12" style="margin-top: 20px;">
+      <el-col class="col-md-6" style="padding:0 5px;">
+        <el-col :span="24" style="border:1px solid #eee;">
+          <el-col :span="24"  class="fxtital">
+            <span style="padding-left:30px;color:#fff;">客户趋势分析</span>
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="选择时间" prop="typeId" style="float:right;">
+                <el-date-picker  v-model="clientTime.saledata1" type="month" value-format="yyyy-MM" @change="changeClient" align="right" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" style="width:120px;">
+                </el-date-picker>
+                <el-date-picker  v-model="clientTime.saledata2" type="month" value-format="yyyy-MM" @change="changeClient" align="right" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" style="width:120px;">
+                </el-date-picker>
+              </el-form-item>
+            </el-form>
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="品牌：" prop="typeId">
+                  <el-select v-model="clientTime.brand" placeholder="请选择" filterable @change="changeClient">
+                    <el-option v-for="item in crmbrand" :label="item.typename" :value="item.typecode" style="width:180px;"></el-option>
+                  </el-select>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="24" style="margin-top:15px;">
+              <div id="mychartcustomer"  class="echare1" style="border:none;"></div>
+          </el-col>
+        </el-col>
+      </el-col>
+    </section>
+    <!--销售数据分析-->
+    <section  class="col-md-12 sale" style="margin-top: 20px;">
+      <el-col :span="24" style="border:1px solid #eee;padding-bottom: 10px;">
+        <el-col :span="24"  class="fxtital">
+          <span style="padding-left:30px;color:#fff;">销售数据分析({{showSale}})</span>
+          <el-form :model="form" label-width="100px" class="demo-ruleForm" style="float:right;margin-right:40px;height: 35px;color:#fff;">
+            <el-form-item label="品牌：" prop="typeId">
+                <el-select v-model="saleSelect.brand" placeholder="请选择" filterable @change="salwquerychange">
+                  <el-option v-for="item in crmbrand" :label="item.typename" :value="item.typecode" style="width:180px;"></el-option>
+                </el-select>
+            </el-form-item>
+          </el-form>
+          <el-form :model="form" label-width="100px" class="demo-ruleForm">
+            <el-form-item label="筛选类别：" prop="typeId">
+              <el-select v-model="saleQeryTime.name" placeholder="请选择" @change="salwquerychange">
+                <el-option v-for="item in saleNewTime" :label="item.name" :value="item.value" style="width:120px"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-form>
+        </el-col>
+        <!-- <el-col :span="24" class="shape">分销部月销售额{{select.fxmonth.substring(4,6)}}月</el-col> -->
+        <!--月展示的数据-->
+        <el-col :span="24" v-if="saleShow.show_month">
+          <el-col :span="24" style="margin-top:15px;">
+            <el-col :span="5">
+              <el-card class="box-card cardmonth" style="height:180px;">
+                <div class="text item">
+                  <el-col :span="24" class="cardlist" style="color: #409eff;line-height: 65px;">{{section.target?toThousands(section.target,2):'0'}}元</el-col>
+                  <el-tooltip placement="bottom">
+                    <div slot="content">我的目标销售额</div>
+                    <el-col :span="24" class="carddetail">目标销售额</el-col>
+                  </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="5">
+              <el-card class="box-card cardmonth" style="height:180px;">
+                <div class="text item">
+                  <el-col :span="24" class="cardlist" style="color: #d48164;line-height: 65px;">{{section.accomplish?toThousands(section.accomplish,2):'0'}}元</el-col>
+                  <el-tooltip placement="bottom">
+                    <div slot="content">我完成的销售额</div>
+                    <el-col :span="24" class="carddetail">完成销售额</el-col>
+                  </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="4">
+              <el-card class="box-card cardmonth" style="height:180px;">
+                <div class="text item">
+                  <el-col :span="24" class="cardlist"  style="color: #8e74f1;line-height: 65px;">{{section.finishingRate?section.finishingRate+'%':'0%'}}</el-col>
+                  <el-tooltip placement="bottom">
+                    <div slot="content">我的销售额完成率</div>
+                    <el-col :span="24" class="carddetail">完成率</el-col>
+                  </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="5">
+              <el-card class="box-card cardmonth" style="height:180px;">
+                <div class="text item">
+                  <el-col :span="24" class="cardlist" style="color: #d48164;line-height: 65px;">{{section.clientSale?toThousands(section.clientSale,2):'0'}}元</el-col>
+                  <el-tooltip placement="bottom">
+                    <div slot="content">我负责的品牌新合作的客户的总销售额</div>
+                    <el-col :span="24" class="carddetail">新增客户销售额</el-col>
+                  </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="5">
+              <el-card class="box-card cardmonth" style="height:180px;">
+                <div class="text item">
+                  <el-col :span="24" class="cardlist" style="color: #409eff;line-height: 65px;">{{section.lossSale?toThousands(section.lossSale,2):'0'}}元</el-col>
+                  <el-tooltip placement="bottom">
+                    <div slot="content">分销部的所有品牌近3个月没有进货的客户,再往前推6个月,</br>计算6个月内这些流失客户半年月均销售额</div>
+                    <el-col :span="24" class="carddetail">流失客户半年月均销售额</el-col>
+                  </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+          </el-col>
+        </el-col>
+        <!--年展示的数据-->
+        <el-col :span="24" v-if="saleShow.show_year">
+          <el-col :span="24" style="margin-top:15px;">
+            <el-col :span="6">
+              <el-card class="box-card cardmonth" style="height:180px;">
+                <div class="text item">
+                  <el-col :span="24" class="cardlist" style="color: #409eff;line-height: 65px;">{{section.target?section.target:'0'}}元</el-col>
+                  <el-tooltip placement="bottom">
+                    <div slot="content">我的目标销售额</div>
+                    <el-col :span="24" class="carddetail">目标销售额</el-col>
+                  </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="6">
+              <el-card class="box-card cardmonth" style="height:180px;">
+                <div class="text item">
+                  <el-col :span="24" class="cardlist" style="color: #d48164;line-height: 65px;">{{section.accomplish?section.accomplish:'0'}}元</el-col>
+                  <el-tooltip placement="bottom">
+                    <div slot="content">我完成的销售额</div>
+                    <el-col :span="24" class="carddetail">完成销售额</el-col>
+                  </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="6">
+              <el-card class="box-card cardmonth" style="height:180px;">
+                <div class="text item">
+                  <el-col :span="24" class="cardlist"  style="color: #8e74f1;line-height: 65px;">{{section.finishingRate?section.finishingRate:'0%'}}</el-col>
+                  <el-tooltip placement="bottom">
+                    <div slot="content">我的销售额完成率</div>
+                    <el-col :span="24" class="carddetail">完成率</el-col>
+                  </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+            <el-col :span="6">
+              <el-card class="box-card cardmonth" style="height:180px;">
+                <div class="text item">
+                  <el-col :span="24" class="cardlist" style="color: #d48164;line-height: 65px;">{{section.clientSale?section.clientSale:'0'}}元</el-col>
+                  <el-tooltip placement="bottom">
+                    <div slot="content">我负责的品牌新合作的客户的总销售额</div>
+                    <el-col :span="24" class="carddetail">新增客户销售额</el-col>
+                  </el-tooltip>
+                </div>
+              </el-card>
+            </el-col>
+          </el-col>
+        </el-col> 
+      </el-col>
+    </section>
+    <!--销售趋势分析-->
+    <section  class="col-md-12" style="margin-top: 20px;">
+      <el-col class="col-md-6" style="padding:0 5px;">
+        <el-col :span="24" style="border:1px solid #eee;padding-bottom: 20px;">
+            <el-col :span="24"  class="fxtital">
+              <span style="padding-left:30px;color:#fff;">销售趋势分析</span>
+              <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="选择时间" prop="typeId" style="float:right;">
+                  <el-date-picker  v-model="sale.saledata1" type="month" value-format="yyyy-MM" @change="changeSale" align="right" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" style="width:120px;">
+                  </el-date-picker>
+                  <el-date-picker  v-model="sale.saledata2" type="month" value-format="yyyy-MM" @change="changeSale" align="right" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" style="width:120px;">
+                  </el-date-picker>
+                </el-form-item>
+              </el-form>
+              <el-form :model="form" label-width="100px" class="demo-ruleForm" style="float:right;margin-right:40px;height: 35px;color:#fff;">
+                <el-form-item label="品牌：" prop="typeId">
+                    <el-select v-model="sale.brand" placeholder="请选择" filterable @change="changeSale">
+                      <el-option v-for="item in crmbrand" :label="item.typename" :value="item.typecode" style="width:180px;"></el-option>
+                    </el-select>
+                </el-form-item>
+              </el-form>
+            </el-col>
+          <el-col :span="24" style="margin-top:15px;">
+              <div id="mychartsale"  class="echare1" style="border:none;"></div>
+          </el-col>
+        </el-col>
+      </el-col>
+    </section>
+    <!--控价数据统计放在后期做-->
+    <section class="col-md-12" style="margin-top: 20px;display: none;">
+      <section class="col-md-7" style="padding:0 5px;">
+        <el-col :span="24" style="border:1px solid #eee;">
+          <el-col :span="24"  class="fxtital">
+            <span style="padding-left:30px;color:#fff;">品牌合作机会分析</span>
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="选择时间" prop="typeId" style="float:right;">
+                <el-date-picker  v-model="brandTime.saledata1" type="month" @change="changeSale" align="right" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" style="width:120px;">
+                </el-date-picker>
+                <el-date-picker  v-model="brandTime.saledata2" type="month" @change="changeSale" align="right" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" style="width:120px;">
+                </el-date-picker>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="24" style="padding:0;">
+              <div id="mychartbrand" class="echare1" style="border:none;height:329px;"></div>
+            </el-col>
+        </el-col>
+      </section> 
+      <section class="col-md-5" style="padding:0 5px;">
+        <el-col :span="24" style="border:1px solid #eee;">
+          <el-col :span="24"  class="fxtital">
+            <span style="padding-left:30px;color:#fff;">销售漏斗</span>
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="选择时间" prop="typeId" style="float:right;">
+                <el-date-picker  v-model="funneltime.time" type="month" @change="changeSale" align="right" unlink-panels range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" style="width:120px;">
+                </el-date-picker>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <section class="col-md-12" style="padding:0 5px;">
+              <div id="main1"  class="echare1" style="border:none;height:329px;"></div>
+          </section>
+        </el-col>
+      </section> 
+    </section>
+    <!--浮动框-->
+    <div class="scroll" :class="{show:isActive}">
+        <div id="toTop" class="toTop" @click="toTop(step)">
+          <i class="el-icon-upload2"></i>
+        </div>
+        <div id="toTop" class="toclient" @click="toTopclient(step)" >
+          <span style="font-size:20px">客户</span>
+        </div>
+        <div id="toTop" class="tosale" @click="toBottom(step)" >
+          <!--暂时执行页面底部，因为销售数据以下没有其他的，等在设计执行属于销售的toTopsale(step) -->
+          <span style="font-size:20px">销售</span>
+        </div>
+    </div>
+  </div>
+<script src="../../dist/js/vue.js"></script>
+<script src="../../dist/js/echarts.js"></script>
+<script src="http://echarts.baidu.com/gallery/vendors/echarts/echarts.min.js"></script>
+<script src="../../dist/js/index.js"></script>
+<script src="../../plugins/jQuery/jquery-2.2.3.min.js"></script>
+<script src="../../bootstrap/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
+<script src="../../dist/js/moment.js"></script>
+<script src="../../dist/js/employee.js?rev=84e462ba2f0e2e9a72355ab1dbbcdc72"></script>
+</body>
+</html>

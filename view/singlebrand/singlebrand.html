@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>润合美CRM系统</title>
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <link rel="stylesheet" href="../../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-ui@2.4.6/lib/theme-chalk/index.css">
+  <link rel="stylesheet" href="../../dist/css/enterprise.css?rev=d90f4c5bcc4b672da3deebb0c94a1597">
+  <link rel="stylesheet" href="../../dist/css/scoller.css?rev=a7760641b986fd3e227a912dbe42b601">
+</head>
+ <body>
+   <div id="app">
+    <section class="top" style="z-index:10;top:0;">
+      <h1 class="title">
+        <span>单品管理</span>
+      </h1>
+      <div class="search">
+        <el-button type="primary" @click="batchfocus">批量关注</el-button>   
+        <el-button type="primary" @click="nobatchfocus">批量不关注</el-button>
+        <el-button type="primary" @click="addbaby">添加宝贝</el-button>  
+        <el-button type="primary" onClick ="$('.el-table').tableExport({ type: 'excel', escape: 'false'},'导出宝贝搜索数据')">导出宝贝</el-button>
+      </div>
+    </section>
+    <section class="col-md-12">
+      <div style="padding: 0;margin-top: 60px;">
+        <div class="col-md-12 form-group well" style="width: 98%;margin-left: 1%;" :style="heightselect">
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="客户名称" prop="typeId">
+                  <el-input v-model="select.customerName" auto-complete="off" clearable @change="change" class="brand" :style="width1"></el-input>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="店铺名称" prop="typeId">
+                  <el-input v-model="select.shopName" auto-complete="off" clearable @change="change" class="brand" :style="width1"></el-input>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="宝贝名称" prop="typeId">
+                  <el-input v-model="select.title" auto-complete="off" clearable @change="change" class="brand" :style="width1"></el-input>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="SKU" prop="typeId">
+                  <el-input v-model="select.attribute" auto-complete="off" clearable @change="change" class="brand" :style="width1"></el-input>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="SPU" prop="typeId">
+                  <el-input v-model="select.spus" auto-complete="off" clearable @change="change" class="brand" :style="width1"></el-input>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="副标题" prop="typeId">
+                  <el-input v-model="select.subtitle" auto-complete="off" clearable @change="change" class="brand" :style="width1"></el-input>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="旺旺号" prop="typeId">
+                  <el-input v-model="select.managerName" auto-complete="off" clearable @change="change" class="brand" :style="width1"></el-input>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="上架状态" prop="typeId">
+                    <el-select v-model="select.salesFlag" placeholder="请选择" @change="change" clearable :style="width1">
+                        <el-option v-for="item in saleFlag" :label="item.typename" :value="item.typecode"></el-option>
+                    </el-select>
+                </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="关注状态" prop="typeId">
+                    <el-select v-model="select.followStatus" placeholder="请选择" @change="change" clearable :style="width1">
+                        <el-option v-for="item in followStatu" :label="item.typename" :value="item.typecode"></el-option>
+                    </el-select>
+                </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="品牌" prop="typeId">
+                    <el-select v-model="brandType" placeholder="请选择" @change="changebrand" clearable :style="width1">
+                        <el-option v-for="item in crmsbrand" :label="item.brandName" :value="item.brandCode"></el-option>
+                    </el-select>
+                </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="宝贝目录" prop="typeId">
+                    <el-select v-model="selectdir.directory" placeholder="请选择" @change="changedir" clearable :style="width1">
+                        <el-option v-for="item in branddirectory" :label="item.brandName" :value="item.brandCode"></el-option>
+                    </el-select>
+                </el-form-item>
+            </el-form>
+          </el-col>
+          <!-- <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+                <el-form-item label="一级类目" prop="typeId">
+                    <el-select v-model="select.category1" placeholder="请选择" @change="change" clearable :style="width1">
+                        <el-option v-for="item in category" :label="item.typename" :value="item.typecode"></el-option>
+                    </el-select>
+                </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="二级类目" prop="typeId">
+                  <el-select v-model="select.category2" placeholder="请选择" @change="change" clearable :style="width1">
+                      <el-option v-for="item in category" :label="item.typename" :value="item.typecode"></el-option>
+                  </el-select>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="三级类目" prop="typeId">
+                  <el-select v-model="select.category3" placeholder="请选择" @change="change" clearable :style="width1">
+                      <el-option v-for="item in category" :label="item.typename" :value="item.typecode"></el-option>
+                  </el-select>
+              </el-form-item>
+            </el-form>
+          </el-col> -->
+      </div>
+    </section>
+    <section class="col-md-12" style="padding: 0;">
+      <div class="col-md-12">
+        <el-table ref="multipleTable" :data="tableData" @selection-change="changeFun" tooltip-effect="dark" :default-sort = "{prop: 'date', order: 'descending'}" style="width: 100%" :max-height="tableHeight">
+          <el-table-column type="selection" width="55"></el-table-column>
+          <el-table-column prop="imgPath" label="图片" sortable width="120">
+            <template scope="scope">
+              <img  :src="scope.row.logo" alt="" style="width: 115px;height: 115px">
+              <span style="display:none;">{{scope.row.logo}}</span>
+            </template> 
+          </el-table-column>     
+          <el-table-column  sortable prop="name" label="宝贝名称" min-width="180"></el-table-column>
+          <el-table-column  sortable prop="subtitle" label="副标题" min-width="180"></el-table-column>
+          <!-- <el-table-column  sortable prop="shop_type" label="类目" min-width="120"></el-table-column> -->
+          <el-table-column  sortable prop="brandName" label="品牌"  min-width="120"></el-table-column>
+          <el-table-column  sortable prop="skuName" label="SKU名称" min-width="120">
+            <template scope="scope"> 
+                <span>{{scope.row.skuName?scope.row.skuName:'--'}}</span><br/>
+                <span>{{scope.row.salesFlag==1?'上架':'下架'}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column  sortable prop="spus" label="SPU"  min-width="280">
+              <template scope="scope"> 
+                <el-col :span="24" v-for="item in scope.row.spus">
+                    <span style="color:#000;">{{item.name}}:</span>
+                    <span style="color: rgb(64, 158, 255);font-size: 10px;">{{item.name2}}</span>
+                </el-col>
+              </template>
+          </el-table-column>
+          <el-table-column  sortable prop="managerName"  label="店铺名称" min-width="120">
+              <template scope="scope">
+                <a :href="'https://shopsearch.taobao.com/search?app=shopsearch&q='+scope.row.url" target="_blank">
+                  <span style="display:block;color:#409eff;">{{scope.row.managerName?scope.row.managerName:'--'}}</span>
+                </a>
+              </template>
+          </el-table-column>
+          </el-table-column>
+          <el-table-column  sortable prop="customerName" label="客户名称" min-width="120"></el-table-column>
+          <el-table-column  sortable prop="monthlySales" label="月收货量" min-width="120"></el-table-column>
+          <el-table-column  sortable prop="followStatus" label="关注状态" min-width="120">
+            <template scope="scope"> 
+              <span>{{scope.row.followStatus == 1?'已关注':'未关注'}}</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <div class="col-md-12 block" style="float:right;">
+          <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage" :page-sizes="[10, 50, 100, 200]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper" :total="total"  style="float: right;margin-top:10px;">
+          </el-pagination>
+        </div>
+    </section>
+    <el-dialog title="添加宝贝" :visible.sync="addbabydialog">
+      <section class="col-md-12" style="padding: 0;">
+        <el-form :model="form" label-width="100px" class="demo-ruleForm">
+          <el-form-item label="宝贝链接:" prop="typeId">
+              <el-input v-model="insertbabay.url" auto-complete="off" clearable></el-input>
+          </el-form-item>
+        </el-form>
+      </section>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="addbabydialog = false">取 消</el-button>
+        <el-button type="primary" @click="addChance">确 定</el-button>
+      </div>
+    </el-dialog>
+  </div>
+<script src="../../dist/js/vue.js"></script>
+<script src="../../dist/js/index.js"></script>
+<script src="../../plugins/jQuery/jquery-2.2.3.min.js"></script>
+<script src="../../bootstrap/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
+<script src="../../dist/js/moment.js"></script>
+<script src="../../dist/js/export.js"></script>
+<script src="../../dist/js/singlebrand.js?rev=983ed6deac890b5d48467f6298c948ed"></script>
+
+</body>
+</html>
