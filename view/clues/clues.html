@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>润合美CRM系统</title>
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <link rel="stylesheet" href="../../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/element-ui@2.4.6/lib/theme-chalk/index.css">
+  <link rel="stylesheet" href="../../dist/css/enterprise.css?rev=67897c8c6e3f7715c16081017a819a1d">
+  <link rel="stylesheet" href="../../dist/css/scoller.css?rev=a7760641b986fd3e227a912dbe42b601">
+  <style>
+    .upload-demo .el-upload__input{
+      display:none;
+    }
+  </style>
+  </head>
+ <body>
+   <div id="app">
+    <section class="top" style="z-index:10;">
+      <h1 class="title">
+        <span>客户线索</span>
+      </h1>
+      <div class="search">
+        <el-button type="primary" @click="exportIn">导入</el-button>
+        <el-button type="primary" @click="exportOut">导出</el-button>
+        <el-button type="primary" @click="addclues">新建</el-button>    
+      </div>
+    </section>
+    <section class="col-md-12">
+      <div style="padding: 0;margin-top: 60px;">
+        <div class="col-md-12 form-group well" style="width: 98%;margin-left: 1%;" :style="heightselect">
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="线索名称" prop="typeId">
+                <el-input v-model="select.clueName" auto-complete="off" filterable clearable @change="change" :style="width1"></el-input>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="来源" prop="typeId">
+                <el-select v-model="select.source" placeholder="请选择" @change="change" auto-complete="off" clearable :style="width1">
+                  <el-option v-for="item in cluesForm" :label="item.typename" :value="item.typename"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="重要程度" prop="typeId">
+                <el-select v-model="select.important" placeholder="请选择" @change="change" auto-complete="off" clearable :style="width1">
+                  <el-option v-for="item in cluesImport" :label="item.typename" :value="item.typename"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-form>
+          </el-col>
+          <el-col :span="6" style="margin-top: 10px;height: 40px;">
+            <el-form :model="form" label-width="100px" class="demo-ruleForm">
+              <el-form-item label="线索状态" prop="typeId">
+                <el-select v-model="select.status" placeholder="请选择" filterable @change="change" auto-complete="off" clearable :style="width1">
+                  <el-option v-for="item in cluesStasrts" :label="item.typename" :value="item.typename"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-form>
+          </el-col>
+        </div>
+      </div>
+    </section>
+    <!--表单-->
+    <el-table ref="multipleTable" :data="tableData" tooltip-effect="dark" :default-sort = "{prop: 'date', order: 'descending'}" style="width: 100%" :max-height="tableHeight">
+      <el-table-column  sortable prop="clue_name" label="线索名称"></el-table-column>
+      <el-table-column  sortable prop="phone" label="联系电话"></el-table-column>
+      <el-table-column  sortable prop="important" label="重要程度"></el-table-column>
+      <el-table-column  sortable prop="source" label="来源"></el-table-column>
+      <el-table-column  sortable prop="clue_status" label="线索状态"></el-table-column>
+      <el-table-column  sortable prop="company_name" label="公司名称"></el-table-column>
+      <el-table-column  sortable prop="shop_name" label="店铺名称"></el-table-column>
+      <el-table-column  sortable prop="taobao_code" label="店铺旺旺"></el-table-column>
+      <el-table-column  sortable label="转化客户" show-overflow-tooltip>
+        <template scope="scope">
+          <span v-if="ifStock(scope.row.stock,scope.row.clue_status)=='-1'">
+            <span style="color:#f56c6c;">未转化</span>
+          </span>
+          <span v-if="ifStock(scope.row.stock,scope.row.clue_status)=='-10'">
+              <span style="color:#777;">无效线索</span>
+            </span>
+          <span v-if="ifStock(scope.row.stock,scope.row.clue_status)=='0'">
+            <a @click="PageTypes(potentialurl+scope.row.customerName,'潜在客户')" style="color: #409eff;">{{scope.row.customerName}}</a>
+          </span> 
+          <span v-if="ifStock(scope.row.stock,scope.row.clue_status)=='1'">
+            <a @click="PageTypes(enterprseurl+scope.row.customerName,'客户管理')" style="color: #409eff;">{{scope.row.customerName}}</a>
+          </span>           
+        </template>
+      </el-table-column>
+      <el-table-column  sortable prop="potentialPrice" label="潜在金额"></el-table-column>
+      <el-table-column  sortable prop="remark" label="备注" show-overflow-tooltip></el-table-column>
+      <el-table-column  sortable label="操作" min-width="100">
+        <template scope="scope">
+          <el-col :span="10">
+            <el-button type="success" @click="hasComplete(scope.row.id)" style="height: 30px;line-height: 0;">修改</el-button>
+          </el-col> 
+          <el-col :span="10" v-if="scope.row.stock=='0'" style="margin-left:5px;">
+            <el-button type="primary" @click="hasCancel(scope.row.id)" style="height: 30px;line-height: 0;">客户转化</el-button>
+          </el-col>                          
+        </template>
+      </el-table-column>
+    </el-table>
+    <!--分页处理-->
+    <div class="col-md-12 block" style="float:right;">
+      <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage" :page-sizes="[10, 50, 100, 200]" :page-size="pageSize" layout="total, sizes, prev, pager, next, jumper" :total="total"  style="float: right;margin-top:10px;">
+    </el-pagination>
+    <!--新建、修改表单共用模板-->
+    <el-dialog :title="title_Clues[CluesStatus]" :visible.sync="dialogVisit"  style="display:none;">
+      <el-form :model="clues_return" :rules="rules" @submit.prevent="submit">
+        <el-form-item label="线索名称" :label-width="formLabelWidth" prop="clueName">
+            <el-input v-model="clues_return.clueName" auto-complete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="线索状态" :label-width="formLabelWidth" prop="status">
+          <el-select v-model="clues_return.status" filterable clearable style="width:100%;">
+            <el-option v-for="item in cluesStasrts" :label="item.typename" :value="item.typename"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="来源" :label-width="formLabelWidth">
+          <el-select v-model="clues_return.source" filterable clearable style="width:100%;">
+            <el-option v-for="item in cluesForm" :label="item.typename" :value="item.typename"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="重要程度" :label-width="formLabelWidth">
+          <el-select v-model="clues_return.important" filterable clearable style="width:100%;">
+            <el-option v-for="item in cluesImport" :label="item.typename" :value="item.typename"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="联系电话" :label-width="formLabelWidth">
+          <el-input v-model="clues_return.phone" auto-complete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="公司名称" :label-width="formLabelWidth">
+          <el-input v-model="clues_return.companyName" auto-complete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="店铺名称" :label-width="formLabelWidth">
+          <el-input v-model="clues_return.shopName" auto-complete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="店铺旺旺" :label-width="formLabelWidth">
+          <el-input v-model="clues_return.taobaoCode" auto-complete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="潜在金额" :label-width="formLabelWidth" prop="potentialPrice">
+          <el-input v-model.number="clues_return.potentialPrice" auto-complete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="描述" :label-width="formLabelWidth">
+          <el-input type="textarea" :rows="5" placeholder="请输入内容"  v-model="clues_return.remark"> </el-input>          
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisit = false">取 消</el-button>
+        <el-button type="primary" @click="dialogAdd">确 定</el-button>
+      </div>
+    </el-dialog>
+    <!--导入数据-->
+    <el-dialog title="导入客户线索" :visible.sync="dialogIn"  style="display:none;">
+      <el-form :model="form" @submit.prevent="submit">
+        <el-button type="primary"  @click="donwClues">下载模板</el-button>
+        <div class="form-group" style="margin-top:15px;">
+            <input type="file" class="form-control" name="file" id="file-import" placeholder=""  accept=".xls,.xlsx">
+        </div>
+        <div class="form-group" id="loadinggif" style="text-align:center;display: none" >
+        </div>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="smsdialog = false" class="cancelsms">取 消</el-button>
+        <el-button type="primary" @click="submitUpload">确 定</el-button>
+      </div>
+    </el-dialog>
+     <!--客户转化-->
+     <el-dialog title="线索转化" :visible.sync="conversion"  style="display:none;">
+        <el-col :span="24" class="visit">客户信息</el-col>
+        <el-form :model="clues_return" :rules="rules" @submit.prevent="submit">
+          <el-form-item label="客户简称" :label-width="formLabelWidth" prop="name">
+              <el-input v-model="client.name" auto-complete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="公司全称" :label-width="formLabelWidth"  prop="introduce">
+              <el-input v-model="client.introduce" auto-complete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="老板" :label-width="formLabelWidth"  prop="boss">
+              <el-input v-model="client.boss" auto-complete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="合作品牌" :label-width="formLabelWidth" prop="cooperative_brand">
+              <el-select v-model="client.cooperative_brand" placeholder="请选择"  multiple collapse-tags style="width:100%">
+                  <el-option v-for="item in crmsbrand" :label="item.dict_value" :value="item.dict_value"></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="合作平台" :label-width="formLabelWidth" prop="cooperation_platform">
+              <el-select v-model="client.cooperation_platform" placeholder="请选择" multiple collapse-tags style="width:100%">
+                  <el-option v-for="item in crmsplatform" :label="item.typename" :value="item.typename"></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="客户标签" :label-width="formLabelWidth" prop="crmsclientLabel">
+                <el-select v-model="client.label" multiple collapse-tags placeholder="请选择" style="width:100%">
+                  <el-option v-for="item in crmsclientLabel" :key="item.typecode" :label="item.typename" :value="item.typename">
+                </el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="负责人" :label-width="formLabelWidth" prop="now_principal_id">
+              <el-select v-model="client.now_principal_id" filterable placeholder="请选择"  style="width:100%;border-radius: 0 5px 5px 0;" >
+                <el-option v-for="item in options1" :key="item.id" :label="item.firstname" :value="item.id"></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="是否签约" :label-width="formLabelWidth" prop="iscooperation">
+              <el-select v-model="client.iscooperation" filterable placeholder="请选择" style="width:100%;border-radius: 0 5px 5px 0;">
+                <el-option v-for="item in crmsiscooperation" :key="item.id" :label="item.name" :value="item.id"></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="详细地址" :label-width="formLabelWidth">
+              <el-input v-model="client.address1" auto-complete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="收货地址" :label-width="formLabelWidth">
+              <el-input v-model="client.address2" auto-complete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="是否有子公司" :label-width="formLabelWidth" prop="subsidiary">
+              <el-select v-model="client.subsidiary" filterable placeholder="请选择" style="width:100%;border-radius: 0 5px 5px 0;">
+                <el-option v-for="item in subsidiarydate" :key="item.id" :label="item.name" :value="item.id"></el-option>
+              </el-select>
+            </el-form-item>
+        </el-form>
+        <el-col :span="24" class="visit">联系人信息</el-col>
+        <el-form :model="clues_return" :rules="rules" @submit.prevent="submit">
+            <el-form-item label="联系人姓名" :label-width="formLabelWidth" prop="name">
+              <el-input v-model="customerdata.name" auto-complete="off" class="clientName"></el-input>
+            </el-form-item>
+            <el-form-item label="联系方式" :label-width="formLabelWidth" prop="name">
+              <el-input v-model="customerdata.contact_way" auto-complete="off" class="clientName"></el-input>
+            </el-form-item>
+        </el-form>
+        <el-col :span="24" class="visit">店铺信息</el-col>
+        <el-form :model="clues_return" :rules="rules" @submit.prevent="submit">
+          <el-form-item label="店铺名称" :label-width="formLabelWidth" prop="name">
+            <el-input v-model="shop.name" auto-complete="off" class="clientName"></el-input>
+          </el-form-item>
+          <el-form-item label="店铺类型" :label-width="formLabelWidth" prop="shop_type">
+              <el-select v-model="shop.shop_type" placeholder="请选择" style="width:100%;">
+                  <el-option v-for="item in crmsshoptype" :label="item.typename" :value="item.typename"></el-option>
+              </el-select>
+          </el-form-item>
+          <el-form-item label="店铺旺旺号" :label-width="formLabelWidth" prop="taobaocode">
+            <el-input v-model="shop.taobaocode" auto-complete="off"></el-input>
+          </el-form-item> 
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="conversion = false">取 消</el-button>
+          <el-button type="primary" @click="conversionAdd">确 定</el-button>
+        </div>
+      </el-dialog>
+  </div>
+<script src="../../dist/js/vue.js"></script>
+<script src="../../dist/js/index.js"></script>
+<script src="../../plugins/jQuery/jquery-2.2.3.min.js"></script>
+<script src="../../bootstrap/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
+<script src="../../dist/js/echarts.js"></script>
+<script src="../../dist/js/ajaxfileupload.js"></script>
+<script src="http://echarts.baidu.com/gallery/vendors/echarts/echarts.min.js"></script>
+<script src="../../dist/js/moment.js"></script>
+<script src="../../dist/js/clues.js?rev=a2f4092e195c49d1e737ab0dfd1ae348"></script>
+</body>
+</html>
