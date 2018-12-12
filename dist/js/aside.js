@@ -46,6 +46,10 @@ var data  = [
     "regulate" : "潜客管理",
     "href" : "./enterprise/potential.html",
     "fontpig" : "fa fa-user"
+   },{
+    "regulate" : "客户线索",
+    "href" : "./clues/clues.html",
+    "fontpig" : "fa fa-user"
    }
 ];
 
