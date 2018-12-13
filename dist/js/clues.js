@@ -75,6 +75,12 @@ var vue = new Vue({
       remark : ''
     },
 
+    //修改数据
+    clues_update : {
+      id : '',
+      clueStatus : ''
+    },
+
     //新增必填项提示
     rules: {
       clueName: [{required: true, message: '请填写线索名称', trigger: 'blur'}],
@@ -106,7 +112,6 @@ var vue = new Vue({
       label : '',
       now_principal_id : '',
       iscooperation : '',
-      district : '',
       address1 : '',
       address2 : '',
       subsidiary : ''
@@ -119,10 +124,40 @@ var vue = new Vue({
     },
 
      //新增店铺表单提交
-     shop : {
+    shop : {
       name : '',
-      shop_type : ''
+      shop_type : '',
+      taobaocode : ''
     },
+
+    //客户转化数据必填项处理
+    clues_conversion : {
+      name: [{required: true, message: '客户简称不能为空', trigger: 'blur'}],
+      introduce : [{required: true, message: '公司全称不能为空', trigger: 'blur'}],
+      boss : [{required: true, message: '该公司老板', trigger: 'blur'}],
+      cooperative_brand : [{required: true, message: '该公司合作品牌不能为空', trigger: 'blur'}],
+      cooperation_platform : [{required: true, message: '该公司合作平台不能为空', trigger: 'blur'}],
+      label : [{required: true, message: '标签不能为空', trigger: 'blur'}],
+      now_principal_id : [{required: true, message: '负责人不能为空', trigger: 'blur'}],
+      iscooperation : [{required: true, message: '是否签约不能为空', trigger: 'blur'}],
+      address1 : [{required: true, message: '详细地址不能为空', trigger: 'blur'}],
+      address2 : [{required: true, message: '收货地址不能为空', trigger: 'blur'}],
+      subsidiary : [{required: true, message: '是否有子公司', trigger: 'blur'}]
+    },
+
+    //联系人必填项
+    clues_contract : {
+      name: [{required: true, message: '联系人名不能为空', trigger: 'blur'}],
+      contact_way : [{required: true, message: '联系电话不能为空', trigger: 'blur'}]
+    },
+
+    //店铺必填项
+    clues_shop : {
+      name: [{required: true, message: '店铺名不能为空', trigger: 'blur'}],
+      shop_type : [{required: true, message: '店铺类型不能为空', trigger: 'blur'}],
+      taobaocode :  [{required: true, message: '店铺旺旺不能为空', trigger: 'blur'}]
+    },
+
 
     height:{height:''},  //详情页统一高度样式
     height1:{height:'',overflow:'auto'}, //客户详情详情页左侧高度样式
@@ -218,6 +253,15 @@ var vue = new Vue({
           }
           
         }
+      }else{
+        return '1';
+      }
+    },
+
+    //判断展示客户转化按钮
+    ifclue_status : function(data){
+      if(data == "已转化" || data =="无效线索"){
+        return '0';
       }else{
         return '1';
       }
@@ -513,17 +557,22 @@ var vue = new Vue({
       this.dialogVisit = true;
       this.CluesStatus = 'edit_clues';
       this.clues_return.id = id;
-      this.getClue(id);      //请求数据详情
+      this.getClue(id,'修改');      //请求数据详情
     },
 
     //获取数据详情
-    getClue : function(id){
+    getClue : function(id,data){
       let url = this.https+'/crm/clue/getClue';
       //获取详情
       this.$http.post(url,{id:id},{emulateJSON: true}).then((res) => {  //.then() 返回成功的数据
         if(res.data.status == "0"){
           this.getClueData = res.data.data;
-          this.cluesInfo(this.getClueData); //展示数据详情
+          if(data == '修改'){
+            this.cluesInfo(this.getClueData); //展示数据详情
+          }else if(data == '客户转化'){
+            this.changeConversion(this.getClueData)
+          }
+          
         }else{
           this.$message('操作失败');
         }
@@ -533,9 +582,10 @@ var vue = new Vue({
       }) 
     },
 
+    //修改数据详情
     cluesInfo : function(data){
       this.clues_return.clueName = data.clueName;
-      this.clues_return.status = data.status;
+      this.clues_return.status = data.clueStatus;
       this.clues_return.source = data.source;
       this.clues_return.important = data.important;
       this.clues_return.phone = data.phone;
@@ -564,8 +614,10 @@ var vue = new Vue({
 
     //客户转化
     hasCancel : function(id){
-     // this.conversion = true;
-     this.$message('此功能未开放');
+      this.conversion = true;
+      //获取线索详情数据
+      this.clues_update.id = id;
+      this.getClue(id,'客户转化');      //请求数据详情
       var brand_url = this.https+'/crm/dictionary/getList';
       this.brand(brand_url);  //合作品牌
       var crm_url = this.https+'/tstypegroup/getTypegroupNoSession';
@@ -580,6 +632,19 @@ var vue = new Vue({
     /** 
      *线索转化模块 
     */
+
+    //线索客户信息同步展示到客户转化
+    changeConversion : function(data){
+      //线索状态修改
+      this.clues_update.clueStatus = '已转化';
+      //客户信息处理
+      this.client.introduce = data.companyName;
+      //联系人信息
+      this.customerdata.contact_way = data.phone;
+      //店铺信息
+      this.shop.name = data.shopName;
+      this.shop.taobaocode = data.taobaoCode;
+    },
 
      //品牌请求
      brand(url){
@@ -647,9 +712,125 @@ var vue = new Vue({
       }) 
     },
 
+    //获取修改客户线索以及提交客户转化相关数据信息
+    changePrimse : function(){
+      //客户线索
+      let  id = this.clues_update.id,
+          clueStatus = this.clues_update.clueStatus;
+      //客户信息
+      let cl_name = this.client.name,
+          cl_introduce = this.client.introduce,
+         // cl_boss = this.client.boss,
+          cl_cooperative_brand = this.client.cooperative_brand?this.client.cooperative_brand.join(','):'',
+          cl_cooperation_platform = this.client.cooperation_platform?this.client.cooperation_platform.join(','):'',
+          cl_label = this.client.label?this.client.label.join(','):'',
+          cl_now_principal_id = this.client.now_principal_id,
+          cl_now_principal_name = '';
+          cl_iscooperation = this.client.iscooperation,
+          cl_address1 = this.client.address1;
+         // cl_address2 = this.client.address2,
+         // cl_subsidiary = this.client.subsidiary;
+      //获取负责人人名称
+      for(var i=0;i<this.options1.length;i++){
+        if(cl_now_principal_id == this.options1[i].id){
+          cl_now_principal_name = this.options1[i].firstname
+        }
+      }
+      //联系方式
+      let co_name = this.customerdata.name,
+          co_contact_way = this.customerdata.contact_way;
+      //店铺信息
+      let sp_name = this.shop.name,
+          sp_shop_type = this.shop.shop_type,
+          sp_taobaocode = this.shop.taobaocode;
+      
+      //客户数据整理
+      let customerData = {
+        name : cl_name,
+        introduce : cl_introduce,
+        cooperative_brand : cl_cooperative_brand,
+        cooperation_platform : cl_cooperation_platform,
+        label : cl_label,
+        now_principal_id : cl_now_principal_id,
+        now_principal_name : cl_now_principal_name,
+        iscooperation : cl_iscooperation,
+        address1 : cl_address1
+      };
+
+      //店铺数据
+      let shopData = {
+        name : sp_name,
+        shop_type : sp_shop_type,
+        taobaocode : sp_taobaocode
+      };
+      
+      //联系人数据整理
+      let contactData = {
+        name : co_name,
+        contact_way : co_contact_way
+      };
+      let data = {
+        id : id,
+        status : clueStatus,
+        customerJson : JSON.stringify(customerData),
+        contactJson : JSON.stringify(contactData),
+        shopJson : JSON.stringify(shopData)
+      };
+
+      //判断不能为空
+      if(cl_name!='' && cl_introduce!='' && cl_cooperative_brand!='' && cl_cooperation_platform!='' && cl_now_principal_id!='' && cl_iscooperation!='' && cl_address1!='' && sp_name!='' && sp_shop_type!='' && sp_taobaocode!='' && co_name!='' && co_contact_way!=''){
+        console.log(data);
+        return data;
+      }else{
+        this.$message('请核对客户、联系人、店铺的必填项处理');
+        return false;
+      }  
+    },
+
     //提交客户转化信息
     conversionAdd : function(){
-      console.log("店铺信息",this.shop,"联系人信息",this.customerdata,"客户信息",this.client);
+      //获取修改客户线索以及提交客户转化相关数据信息
+      let url = this.https+'/crm/clue/transferClueToCustomer';
+      let table = this.https+'/crm/clue/listCusClue';
+      let pre = this.changePrimse();
+      if(pre!=false){
+        Vue.http.options.emulateJSON = true;
+        Vue.http.options.headers = {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+        };
+        this.$http.post(url,pre,{headers:{'Content-Type': 'application/json'}}).then((res) => {  //.then() 返回成功的数据
+          if(res.data.status == 0){
+            this.$message('客户转化成功');
+            this.conversion=false;
+            this.$options.methods.getData.bind(this)(table,this.primsData(1,10));
+            this.$options.methods.closePrimse.bind(this)();//清空数据
+          }else{
+            this.$message('客户转化失败');
+          }
+        })
+        .catch(function(res) {
+            console.log(res)
+        }) 
+      }
+    },
+
+    //客户转化清除数据
+    closePrimse : function(){
+      this.clues_update.id = '';
+      this.clues_update.clueStatus = '';
+      this.client.name = '';
+      this.client.introduce = '';
+      this.client.cooperative_brand = [];
+      this.client.cooperation_platform = [];
+      this.client.label = [];
+      this.client.now_principal_id = '';
+      this.client.iscooperation = '';
+      this.client.address1 = '';
+      this.customerdata.name = '';
+      this.customerdata.contact_way = '';
+      this.shop.name = '';
+      this.shop.shop_type = '';
+      this.shop.taobaocode = '';
     },
 
     //跳转页面到跟进记录中
