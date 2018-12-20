@@ -50,6 +50,10 @@ var data  = [
     "regulate" : "客户线索",
     "href" : "./clues/clues.html",
     "fontpig" : "fa fa-user"
+   },{
+    "regulate" : "企业结构",
+    "href" : "./structure/structure.html",
+    "fontpig" : "fa fa-user"
    }
 ];
 
