@@ -4,7 +4,7 @@
 */
 var vue = new Vue({
   el:"#app",
-  mounted(){
+  mounted:function(){
     var labelurl = '/crm/customer/getList';
     var crm_url = '/tstypegroup/getTypegroupNoSession';
     var url = '/tsuser/getTSUsers?pageSize=-1';
@@ -17,13 +17,13 @@ var vue = new Vue({
     this.clientIntimacy(https+crm_url); //亲密度
     this.getCityData(); //省市县三级联动
     this.localdata(); //展示默认数据
-   
   },
   data:{
     form:{
         typeId:''
     },
     input: '',
+    browser : '', //浏览器版本
     crmsplatform : [], //合作平台
     crmsclientType : [], //客户类型 
     crmsclientStatic : [], //RFM分层
@@ -54,6 +54,7 @@ var vue = new Vue({
     shopShow : [], //商店信息
     customerShow : [], //联系人详情
     policymakerName : [], //决策人信息
+    pcustomer : [], //母公司
     https : '',//请求接口前缀
     province : [],  //省  
     shi1: [],//市
@@ -74,11 +75,14 @@ var vue = new Vue({
     sex : [{name:"男",id:1},{name:"女",id:2},{name:"未知",id:3}], //性别数据
     departure :[{name:"在职",id:"0"},{name:"离职",id:"1"}],
     contacts : [{name:"手机",id:"手机"},{name:"电话",id:"电话"},{name:"家庭",id:"家庭"},{name:"公司",id:"公司"},{name:"其他",id:"其他"}],//联系方式
+    companyType : [   //客户方式
+      {name : '企业客户'},{name : '个人客户'}
+    ], 
     pageSize : '', //分页
     total : '' ,//总数
     pickerOptions2: {shortcuts: [{
         text: '最近一周',
-        onClick(picker) {
+        onClick:function(picker) {
           const end = new Date();
           const start = new Date();
           start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
@@ -86,7 +90,7 @@ var vue = new Vue({
         }
         }, {
           text: '最近一个月',
-          onClick(picker) {
+          onClick:function(picker) {
             const end = new Date();
             const start = new Date();
             start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
@@ -94,7 +98,7 @@ var vue = new Vue({
           }
         }, {
         text: '最近三个月',
-        onClick(picker) {
+        onClick:function(picker) {
           const end = new Date();
           const start = new Date();
           start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
@@ -102,24 +106,24 @@ var vue = new Vue({
         }
     }]},  //日期控件
     pickerOptions1: {
-      disabledDate(time) {
+      disabledDate:function(time) {
         return time.getTime() > Date.now();
       },
       shortcuts: [{
         text: '今天',
-        onClick(picker) {
+        onClick:function(picker) {
           picker.$emit('pick', new Date());
         }
       }, {
         text: '昨天',
-        onClick(picker) {
+        onClick:function(picker) {
           const date = new Date();
           date.setTime(date.getTime() - 3600 * 1000 * 24);
           picker.$emit('pick', date);
         }
       }, {
         text: '一周前',
-        onClick(picker) {
+        onClick:function(picker) {
           const date = new Date();
           date.setTime(date.getTime() - 3600 * 1000 * 24 * 7);
           picker.$emit('pick', date);
@@ -150,10 +154,10 @@ var vue = new Vue({
     turnover : false, //移交客户
 
     //表单数据隐藏与现实  true是隐藏，false是显示
-    show_brand : true,show_deposit : false,show_cooperation : true,show_rfms : true,show_yearsales : true,show_name : true,show_tel : true,show_level : false,show_status : true,show_importance : true,show_province : false,show_district : false,show_address : true,show_source : true,show_intimacy : false,show_createor : false,show_label : false,show_synergy : true,show_first : false,show_last : false,show_update : false,show_create : false,show_type : true,show_rfm : false,show_city:false,
+    show_legals:false,show_brand : true,show_deposit : false,show_cooperation : true,show_rfms : true,show_yearsales : true,show_name : true,show_tel : true,show_level : false,show_status : true,show_importance : true,show_province : false,show_district : false,show_address : true,show_source : true,show_intimacy : false,show_createor : false,show_label : false,show_synergy : true,show_receive : false,show_u8 : false,show_pname : false,show_create : false,show_type : true,show_charter : false,show_city:false,show_consignee:false,show_iscoper:false,show_index:false,show_erosion : false,show_capital:false,show_size:false,show_receivephone:false,
 
     //多选框按钮 true是勾选，false取消勾选
-    showbrand : true,showdeposit : false,showcooperation : true,showrfms:true,showyearsales:true,showname : true,showtel : true,showlevel : false,showstatus : true,showimportance : true,showprovince : false,showdistrict : false,showaddress : true,showsource : true,showintimacy : false,showcreateor : false,showlabel : false,showsynergy : true,showfirst : false,showlast : false,showupdate : false,showcreate : false,showtype : true,showrfm : false,showcity:false,
+    showlegals:false,showbrand : true,showdeposit : false,showcooperation : true,showrfms:true,showyearsales:true,showname : true,showtel : true,showlevel : false,showstatus : true,showimportance : true,showprovince : false,showdistrict : false,showaddress : true,showsource : true,showintimacy : false,showcreateor : false,showlabel : false,showsynergy : true,showreceive : false,showu8 : false,showpname : false,showcreate : false,showtype : true,showcharter : false,showcity:false,showconsignee:false,showiscoper:false,showindex:false,showerosion:false,showcapital:false,showsize:false,showreceivephone:false,
 
     //客户表头信息
     title_enterprise: {
@@ -185,13 +189,11 @@ var vue = new Vue({
 
     //筛选条件
     select : {
+      name : '',
+      introduce : '',
       cooperative_brand : '',
-      customerSource : '',
       customer_status : '',
       customer_level : '',
-      intimacy : '',
-      last_month_rfm_start : '',
-      last_month_rfm_end : '',
       now_principal_id : '',
       last_follow_up_date : '',
       create_date : ''
@@ -200,50 +202,54 @@ var vue = new Vue({
     //新增表单提交
     client : {
       id : '',
-      name : '',
-      introduce : '',
-      deposit : '',
+      //右侧
+      company_type : '',
+      legal_person : '',
+      consignee :'',
+      receive_phone : '',
       contacts_name : '',
-      contacts_tel : '',
-      importance : '',
-      last_month_rfm : '',
+      p_id : '',
       u8_code : '',
       cooperative_brand : '',
-      cooperation_platform : '',
       customer_type : '',
-      customer_status : '',
-      customer_level : '',
-      intimacy : '',
       label : '',
-      customer_source : '',
-      now_principal_id : '',
       iscooperation : '',
+      first_cooperation_date : '',
+      erosion_index : '',
+      registered_capital : '',
+      //右侧
+      introduce : '',
+      name : '',
+      charter : '',
+      now_principal_id : '',
+      receive_address : '',
+      contacts_tel : '',
+      deposit : '',
+      importance : '',
+      cooperation_platform : '',
+      intimacy : '',
+      customer_source : '',
+      team_size : '',
+      first_contact_sales : '',
+      erosion_cause : '',
+      annual_sales_volume : '',
+    
+      //下边
       province : '',
       city : '',
       district : '',
       address : '',
-      first_cooperation_date : '',
-      first_contact_sales : '',
-      erosion_index : '',
-      erosion_cause : '',
-      legal_person : '',
-      registered_capital : '',
-      annual_sales_volume : '',
-      team_size : ''
     },
     rules: {//必填项提示
-      name: [{required: true, message: '请输入客户简称', trigger: 'blur'}],
+      companyType : [{required: true, message: '请选择客户类型', trigger: 'blur'}],
       introduce : [{required: true, message: '请输入客户全称', trigger: 'blur'}],
-      deposit : [{type: 'number', message: '保证金必须为数字'}],
-      contacts_name :[{required: true, message: '请输入联系人', trigger: 'blur'}],
-      contacts_tel : [{required: true, message: '请输入联系电话', trigger: 'blur' }, { type: 'number', message: '联系电话为数字'}],
-      last_month_rfm : [{type: 'number', message: 'RFM为数字'}],
-      u8_code : [{type: 'number', message: 'U8数据为数字'}],
-      cooperative_brand : [{ required: true, message: '请选择合作品牌', trigger: 'blur'}],
-      cooperation_platform : [{required: true, message: '请选择合作平台', trigger: 'blur'}],
-      crmsclientLabel : [{required: true, message: '请选择标签', trigger: 'blur'}],
+      name: [{required: true, message: '请输入客户名称', trigger: 'blur'}],
+      legal_person : [{required: true, message: '请输入法人代表', trigger: 'blur'}],
+      consignee :[{required: true, message: '请输入收货人', trigger: 'blur'}],
+      receive_phone : [{required: true, message: '请输入收货电话', trigger: 'blur' }],
       now_principal_id : [{required: true, message: '请选择负责人', trigger: 'blur'}],
-      iscooperation : [{required: true, message: '请选择是否签约', trigger: 'blur'}]
+      charter : [{required: true, message: '请输入营业执照', trigger: 'blur'}],
+      receive_address : [{required: true, message: '请输入收货地址', trigger: 'blur'}]
     },
 
     records :{
@@ -423,19 +429,32 @@ var vue = new Vue({
     tableHeight : '', //表单的最大高度设置
     stockheighttable : ''
   },
-  created(){
+  created:function(){
     this.hh();
     this.ww();
     const that = this;
-    window.onresize = () => {
-      return (() => {
-        this.hh();
-        this.ww();
-      })();
-    };
+    this.getBrowserInfo();
+    if(this.browser != 'IE' || this.browser!='safari'){
+        window.onresize = () => {
+        return (() => {
+          this.hh();
+          this.ww();
+        })();
+      };
+    }
+    
   },
   methods:{
-    hh(){
+    getBrowserInfo : function(){
+      var Sys = {};
+      var ua = navigator.userAgent.toLowerCase();
+      var re =/(msie|firefox|chrome|opera|version).*?([\d.]+)/;
+      var m = ua.match(re);
+      Sys.browser = m[1].replace(/version/, "'safari");
+      Sys.ver = m[2];
+      this.browser=Sys.browser;
+    },
+    hh:function(){
       this.height.height=window.innerHeight+'px';
       this.height1.height = window.innerHeight-200+'px';
       this.height3.height = window.innerHeight-100+'px';
@@ -446,7 +465,7 @@ var vue = new Vue({
     },
 
     //获取页面宽度
-    ww(){
+    ww:function(){
       if(window.innerWidth<=1000){
         this.heightselect.height = '190px';
         this.width.width='95%';
@@ -488,31 +507,61 @@ var vue = new Vue({
 
     //获取当前页面的url路径
     vueUrl(){
-      var url = location.href.split('/rhmcrm')[0];
-      if(url == "http://test.runhemei.com/maochao_test"){
-        url = "http://test.runhemei.com/maochao"
-        this.https = url;
-        return url;
-      }else{
-        this.https = url;
-        return url;
-      }
+      var url = location.href.split('/maochao')[0];
+      this.https = url+'/maochao';
+      return this.https;
     },
 
     //获取url的参数，并且进行查询数据
     geturldata:function(){
-      var time = this.getQueryString('time');
-      var name = this.getQueryString('name');
+      let time = this.getQueryString('time');
+      let type = this.getQueryString('type');
+      let name = this.getQueryString('name');
       if(time!=null){
         var time1 = time+' 00:00:00',time2 = time+' 23:59:59';
         this.select.create_date=[time1,time2];
         this.change();
-      }else{
+      }
+      if(type=='个人客户'){
         this.select.name = name;
+        this.change();
+      }else{
+        this.select.introduce = name;
         this.change();
       }
     },
+
+    //判断详情中tag是否为空
+    tagIf : function(data){
+      if(data!=null){
+        return '1';
+      }else{
+        return '0';
+      }
+    },
+
+    //处理潜在客户列表联系电话
+    contactstel : function(row){
+      if(typeof(row) == "object"){
+        if(row.contacts_tel!=null){
+          return row.contacts_tel.replace(/\+86-/, "");
+        }
+      }else{
+        return row.replace(/\+86-/, "");
+      }
+    },
+    //处理潜在客户列表收货电话
+    receivephone : function(row){
+      if(typeof(row) == "object"){
+        if(row.receive_phone!=null){
+          return row.receive_phone.replace(/\+86-/, "");
+        }
+      }else{
+        return row.replace(/\+86-/, "");
+      }
+    },
     
+    //截取url参数
     getQueryString : function(name){
       //获取url参数
       var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i');
@@ -524,7 +573,7 @@ var vue = new Vue({
     },
 
     //公司成员请求
-    request(url){
+    request:function(url){
       this.$http.get(url).then((res) => {  //.then() 返回成功的数据
         for(var i=0;i<res.data.data.result.length;i++){
           if(res.data.data.result[i].ding_user_avatar ==null){
@@ -542,6 +591,7 @@ var vue = new Vue({
 
     //把首次默认展示数据提交到localstorng中
     firstlocaldata : function(){
+      localStorage.setItem("showlegals",false);localStorage.setItem("show_legals",false);//法人
       localStorage.setItem("showbrand",true);localStorage.setItem("show_brand",true);//品牌合作机会
       localStorage.setItem("showdeposit",false);localStorage.setItem("show_deposit",false);//保证金
       localStorage.setItem("showcooperation",false);localStorage.setItem("show_cooperation",false); //合作平台
@@ -558,21 +608,30 @@ var vue = new Vue({
       localStorage.setItem("showcreateor",false);localStorage.setItem("show_createor",false); //创建人
       localStorage.setItem("showlabel",false);localStorage.setItem("show_label",false); //客户标签
       localStorage.setItem("showsynergy",true);localStorage.setItem("show_synergy",true); //协同人
-      localStorage.setItem("showfirst",false);localStorage.setItem("show_first",false); //首次付款时间
-      localStorage.setItem("showlast",true);localStorage.setItem("show_last",true); //最后跟进时间
-      localStorage.setItem("showupdate",false);localStorage.setItem("show_update",false); //修改时间
+      localStorage.setItem("showreceive",false);localStorage.setItem("show_receive",false); //首次付款时间
+      localStorage.setItem("showu8",true);localStorage.setItem("show_u8",true); //u8
+      localStorage.setItem("showpname",false);localStorage.setItem("show_pname",false); //修改时间
       localStorage.setItem("showcreate",false);localStorage.setItem("show_create",false); //创建时间
       localStorage.setItem("showtype",false);localStorage.setItem("show_type",false); //客户类型
-      localStorage.setItem("showrfm",false);localStorage.setItem("show_rfm",false); //上月RFM指数
+      localStorage.setItem("showcharter",false);localStorage.setItem("show_charter",false); //上月RFM指数
       localStorage.setItem("showcity",false);localStorage.setItem("show_city",false); //市
       localStorage.setItem("showrfms",true);localStorage.setItem("show_rfms",true);//RFM
-      localStorage.setItem("showyearsales",true);localStorage.setItem("show_yearsales",true);//近一年销售额
+      localStorage.setItem("showyearsales",true);localStorage.setItem("show_yearsales",true);//年销售额
+      localStorage.setItem("showconsignee",false);localStorage.setItem("show_consignee",false);//收货人
+      localStorage.setItem("showreceivephone",false);localStorage.setItem("show_receivephone",false); //收货电话
+      localStorage.setItem("showiscoper",false);localStorage.setItem("show_iscoper",false);//是否签约
+      localStorage.setItem("showindex",false);localStorage.setItem("show_index",false);//流失指数
+      localStorage.setItem("showerosion",false);localStorage.setItem("show_erosion",false);//流失原因
+      localStorage.setItem("showcapital",false);localStorage.setItem("show_capital",false);//流失原因
+      localStorage.setItem("showsize",false);localStorage.setItem("show_size",false);//团队规模
       this.localdata();//加载浏览器的数据信息
     },
 
     //表单数据展示与隐藏设置
     showHide : function(show){
       switch(show){
+        case 'show_legals' : if(this.show_legals == false){localStorage.setItem("showlegals",true);localStorage.setItem("show_legals",true); this.showlegals = true;return this.show_legals = true;}else{localStorage.setItem("showlegals",false);localStorage.setItem("show_legals",false);this.showlegals = false;return this.show_legals = false;}
+            break;
         case 'show_brand' : if(this.show_brand == false){localStorage.setItem("showbrand",true);localStorage.setItem("show_brand",true); this.showbrand = true;return this.show_brand = true;}else{localStorage.setItem("showbrand",false);localStorage.setItem("show_brand",false);this.showbrand = false;return this.show_brand = false;}
             break;
         case 'show_deposit' :if(this.show_deposit === false){localStorage.setItem("showdeposit","true");localStorage.setItem("show_deposit","true");this.showdeposit = true;return this.show_deposit = true;}else{
@@ -607,23 +666,37 @@ var vue = new Vue({
             break;
         case 'show_synergy' : if(this.show_synergy === false){localStorage.setItem("showsynergy","true");localStorage.setItem("show_synergy","true");this.showsynergy = true; return this.show_synergy = true;}else{localStorage.setItem("showsynergy","false");localStorage.setItem("show_synergy","false");this.showsynergy = false;return this.show_synergy = false;}
             break;
-        case 'show_first' : if(this.show_first === false){localStorage.setItem("showfirst","true");localStorage.setItem("show_first","true");this.showfirst = true;return this.show_first = true;}else{localStorage.setItem("showfirst","false");localStorage.setItem("show_first","false"); this.showfirst = false; return this.show_first = false;}
+        case 'show_receive' : if(this.show_receive === false){localStorage.setItem("showreceive","true");localStorage.setItem("show_receive","true");this.showreceive = true;return this.show_receive = true;}else{localStorage.setItem("showreceive","false");localStorage.setItem("show_receive","false"); this.showreceive = false; return this.show_receive = false;}
             break;
-        case 'show_last' : if(this.show_last === false){localStorage.setItem("showlast","true");localStorage.setItem("show_last","true"); this.showlast = true;return this.show_last = true;}else{localStorage.setItem("showlast","false");localStorage.setItem("show_last","false");this.showlast = false;return this.show_last = false;}
+        case 'show_u8' : if(this.show_u8 === false){localStorage.setItem("showu8","true");localStorage.setItem("show_u8","true"); this.showu8 = true;return this.show_u8 = true;}else{localStorage.setItem("showu8","false");localStorage.setItem("show_u8","false");this.showu8 = false;return this.show_u8 = false;}
             break;
-        case 'show_update' : if(this.show_update === false){localStorage.setItem("showupdate","true");localStorage.setItem("show_update","true");this.showupdate = true; return this.show_update = true;}else{localStorage.setItem("showupdate","false");localStorage.setItem("show_update","false");this.showupdate = false;return this.show_update = false;}
+        case 'show_pname' : if(this.show_pname === false){localStorage.setItem("showpname","true");localStorage.setItem("show_pname","true");this.showpname = true; return this.show_pname = true;}else{localStorage.setItem("showpname","false");localStorage.setItem("show_pname","false");this.showpname = false;return this.show_pname = false;}
             break;
         case 'show_create' : if(this.show_create === false){localStorage.setItem("showcreate","true");localStorage.setItem("show_create","true");this.showcreate = true;return this.show_create = true;}else{localStorage.setItem("showcreate","false");localStorage.setItem("show_create","false");this.showcreate = false;return this.show_create = false;}
             break;
         case 'show_type' :if(this.show_type === false){localStorage.setItem("showtype","true");localStorage.setItem("show_type","true");this.showtype = true;return this.show_type = true;}else{localStorage.setItem("showtype","false"); localStorage.setItem("show_type","false");this.showtype = false;return this.show_type = false;}
             break;
-        case 'show_rfm' : if(this.show_rfm === false){localStorage.setItem("showrfm","true");localStorage.setItem("show_rfm","true"); this.showrfm = true;return this.show_rfm = true;}else{localStorage.setItem("showrfm","false");localStorage.setItem("show_rfm","false");this.showrfm = false;return this.show_rfm = false;}
+        case 'show_charter' : if(this.show_charter === false){localStorage.setItem("showcharter","true");localStorage.setItem("show_charter","true"); this.showcharter = true;return this.show_charter = true;}else{localStorage.setItem("showcharter","false");localStorage.setItem("show_charter","false");this.showcharter = false;return this.show_charter = false;}
             break;
         case 'show_city' : if(this.show_city === false){localStorage.setItem("showcity","true");localStorage.setItem("show_city","true");this.showcity = true;return this.show_city = true;}else{localStorage.setItem("showcity","false");localStorage.setItem("show_city","false"); this.showcity = false; return this.show_city = false;}
             break;
         case 'show_rfms' : if(this.show_rfms == false){localStorage.setItem("showrfms",true);localStorage.setItem("show_rfms",true); this.showrfms = true;return this.show_rfms = true;}else{localStorage.setItem("showrfms",false);localStorage.setItem("show_rfms",false);this.showrfms = false;return this.show_rfms = false;}
         break;
         case 'show_yearsales' : if(this.show_yearsales == false){localStorage.setItem("showyearsales",true);localStorage.setItem("show_yearsales",true); this.showyearsales = true;return this.show_yearsales = true;}else{localStorage.setItem("showyearsales",false);localStorage.setItem("show_yearsales",false);this.showyearsales = false;return this.show_yearsales = false;}
+        break;
+        case 'show_consignee' : if(this.show_consignee == false){localStorage.setItem("showconsignee",true);localStorage.setItem("show_consignee",true); this.showconsignee = true;return this.show_consignee = true;}else{localStorage.setItem("showconsignee",false);localStorage.setItem("show_consignee",false);this.showconsignee = false;return this.show_consignee = false;}
+        break;
+        case 'show_iscoper' : if(this.show_iscoper == false){localStorage.setItem("showiscoper",true);localStorage.setItem("show_iscoper",true); this.showiscoper = true;return this.show_iscoper = true;}else{localStorage.setItem("showiscoper",false);localStorage.setItem("show_iscoper",false);this.showiscoper = false;return this.show_iscoper = false;}
+        break;
+        case 'show_index' : if(this.show_index == false){localStorage.setItem("showindex",true);localStorage.setItem("show_index",true); this.showindex = true;return this.show_index = true;}else{localStorage.setItem("showindex",false);localStorage.setItem("show_index",false);this.showindex = false;return this.show_index = false;}
+        break;
+        case 'show_erosion' : if(this.show_erosion == false){localStorage.setItem("showerosion",true);localStorage.setItem("show_erosion",true); this.showerosion = true;return this.show_erosion = true;}else{localStorage.setItem("showerosion",false);localStorage.setItem("show_erosion",false);this.showerosion = false;return this.show_erosion = false;}
+        break;
+        case 'show_capital' : if(this.show_capital == false){localStorage.setItem("showcapital",true);localStorage.setItem("show_capital",true); this.showcapital = true;return this.show_capital = true;}else{localStorage.setItem("showcapital",false);localStorage.setItem("show_capital",false);this.showcapital = false;return this.show_capital = false;}
+        break;
+        case 'show_size' : if(this.show_size == false){localStorage.setItem("showsize",true);localStorage.setItem("show_size",true); this.showsize = true;return this.show_size = true;}else{localStorage.setItem("showsize",false);localStorage.setItem("show_size",false);this.showsize = false;return this.show_size = false;}
+        break;
+        case 'show_receivephone' :  if(this.show_receivephone == false){localStorage.setItem("showreceivephone",true);localStorage.setItem("show_receivephone",true); this.showreceivephone = true;return this.show_receivephone = true;}else{localStorage.setItem("showreceivephone",false);localStorage.setItem("show_receivephone",false);this.showreceivephone = false;return this.show_receivephone = false;}
         break;
       }
     },
@@ -632,6 +705,10 @@ var vue = new Vue({
     localdata : function(){
       var key = localStorage.getItem("show_brand");
       if(key != null){
+         //法人
+         if(localStorage.show_legals == 'true'){this.show_legals = true;this.showlegals = true;}else{this.show_legals = false;this.showlegals =  false;}
+        //收货电话
+        if(localStorage.show_receivephone == 'true'){this.show_receivephone = true;this.showreceivephone = true;}else{this.show_receivephone = false;this.showreceivephone =  false;}
         //判断品牌机会显示或隐藏
         if(localStorage.show_brand == 'true'){this.show_brand = true;this.showbrand =  true;}else{this.show_brand = false;this.showbrand =  false;}
         //判断保证金显示或隐藏
@@ -667,21 +744,29 @@ var vue = new Vue({
         //判断协同人显示或隐藏
         if(localStorage.show_synergy == 'true'){this.show_synergy = true;this.showsynergy =  true;}else{this.showsynergy = false;this.show_synergy =  false;}
         //判断首次付款时间显示或隐藏
-        if(localStorage.show_first == 'true'){this.show_first = true;this.showfirst =  true;}else{this.showfirst = false;this.show_first =  false;}
+        if(localStorage.show_receive == 'true'){this.show_receive = true;this.showreceive =  true;}else{this.showreceive = false;this.show_receive =  false;}
         //判断最后跟进时间显示或隐藏
-        if(localStorage.show_last == 'true'){this.show_last = true;this.showlast =  true;}else{this.showlast = false;this.show_last =  false;}
+        if(localStorage.show_u8 == 'true'){this.show_u8 = true;this.showu8 =  true;}else{this.showu8 = false;this.showu8 =  false;}
         //判断跟新时间显示或隐藏
-        if(localStorage.show_update == 'true'){this.show_update = true;this.showupdate =  true;}else{this.showupdate = false;this.show_update =  false;}
+        if(localStorage.show_pname == 'true'){this.show_pname = true;this.showpname =  true;}else{this.showpname = false;this.show_pname =  false;}
         //判断创建时间显示或隐藏
         if(localStorage.show_create == 'true'){this.show_create = true;this.showcreate =  true;}else{this.showcreate = false;this.show_create =  false;}
         //判断客户类型显示或隐藏
         if(localStorage.show_type == 'true'){this.show_type = true;this.showtype =  true;}else{this.showtype = false;this.show_type =  false;}
         //判断RFM指数显示或隐藏
-        if(localStorage.show_rfm == 'true'){this.show_rfm = true;this.showrfm =  true;}else{this.showrfm = false;this.show_rfm =  false;}
+        if(localStorage.show_charter == 'true'){this.show_charter = true;this.showcharter =  true;}else{this.showcharter = false;this.show_charter =  false;}
         //判断市显示或隐藏
         if(localStorage.show_city == 'true'){this.show_city = true;this.showcity =  true;}else{this.showcity = false;this.show_city =  false;}
         //RFM显示与隐藏
         if(localStorage.show_rfms == 'true'){this.show_rfms = true;this.showrfms =  true;}else{this.show_rfms = false;this.showrfms =  false;}
+        //指数
+        if(localStorage.show_index == 'true'){this.show_index = true;this.showindex =  true;}else{this.show_index = false;this.showindex =  false;}
+        //年销售额
+        if(localStorage.show_yearsales == 'true'){this.show_yearsales = true;this.showyearsales =  true;}else{this.show_yearsales = false;this.showyearsales =  false;}
+        //注册资本
+        if(localStorage.show_capital == 'true'){this.show_capital = true;this.showcapital =  true;}else{this.show_capital = false;this.showcapital =  false;}
+        //规模
+        if(localStorage.show_size == 'true'){this.show_size = true;this.showsize =  true;}else{this.show_size = false;this.showsize =  false;}
       }else{
         this.firstlocaldata();
       }
@@ -1057,7 +1142,7 @@ var vue = new Vue({
 
     //联系方式转换
     customerWay : function(data){
-      if(data !='' && data != undefined && typeof(data)!="string"){
+      if(data !='' && data != undefined && typeof(data)=="string"){
         var contact = JSON.parse(data);
         if(typeof(contact) == "object"){
           try{
@@ -1128,11 +1213,11 @@ var vue = new Vue({
 
     //是否签约
     signed : function(row){
-      switch(Number(row)){
-        case 0:
+      switch(row){
+        case '0':
         return '未签约';
         break;
-        case 1:
+        case '1':
         return '已签约';
         break;
         default:
@@ -1212,12 +1297,28 @@ var vue = new Vue({
           page: pageNum?pageNum:1,
           pageSize: pageSize?pageSize:10,
           paramsJson : JSON.stringify(data),
-          searchPotentialCus : 1
+          searchPotentialCus : this.getQueryString('searchPotentialCus')
       };
       this.$http.post(url,para,{emulateJSON: true}).then((res) => {  //.then() 返回成功的数据
         this.tableData = res.data.data.result;
         this.pageSize = res.data.data.pageSize;
         this.total = res.data.data.totalCount;
+        this.pcustomerData();   //    请求母公司数据信息
+      })
+      .catch(function(res) {
+          console.log(res)
+      }) 
+    },
+
+    //母公司信息
+    pcustomerData : function(){
+      let labelurl = this.https+'/crm/customer/getList';
+      let para = {
+        page:1,
+        pageSize: -1,
+      };
+      this.$http.post(labelurl,para,{emulateJSON: true}).then((res) => {  //.then() 返回成功的数据
+        this.pcustomer = res.data.data.result;
       })
       .catch(function(res) {
           console.log(res)
@@ -1721,25 +1822,16 @@ var vue = new Vue({
 
     //请求数据的prims数据
     primsData : function(){
-      var cooperative_brand = this.select.cooperative_brand?" LIKE "+"'%"+this.select.cooperative_brand+"%'":'',
-          name =  this.select.name?" LIKE "+"'%"+this.select.name+"%'":'',
+      var name =  this.select.name?" LIKE "+"'%"+this.select.name+"%'":'',
+          introduce = this.select.introduce?" LIKE "+"'%"+this.select.introduce+"%'":'',
+          cooperative_brand = this.select.cooperative_brand?" LIKE "+"'%"+this.select.cooperative_brand+"%'":'',
           customer_status = this.select.customer_status?"='"+this.select.customer_status+"'":'',
           customer_level = this.select.customer_level?"='"+this.select.customer_level+"'":'',
-          intimacy = this.select.intimacy?"='"+this.select.intimacy+"'":'',
-          last_month_rfm_start = this.select.last_month_rfm_start,
-          last_month_rfm_end = this.select.last_month_rfm_end,
           now_principal_id = this.select.now_principal_id?"='"+this.select.now_principal_id+"'":'',
           last_follow_up_date_start = this.select.last_follow_up_date?moment(this.select.last_follow_up_date[0]).format("YYYY-MM-DD HH:MM:SS"):'',
           last_follow_up_date_end = this.select.last_follow_up_date?moment(this.select.last_follow_up_date[1]).format("YYYY-MM-DD HH:MM:SS"):'',
           create_date_start = this.select.create_date?moment(this.select.create_date[0]).format("YYYY-MM-DD HH:MM:SS"):'',
           create_date_end = this.select.create_date?moment(this.select.create_date[1]).format("YYYY-MM-DD HH:MM:SS"):'';
-
-      //判断RFM指数范围都有值
-      var last_month_rfm = '';
-
-      if(last_month_rfm_start!='' && last_month_rfm_end!=''){
-        last_month_rfm = ' BETWEEN '+"'"+last_month_rfm_start+"'"+' AND '+"'"+last_month_rfm_end+"'";
-      }
 
       //判断最后联系时间
       var last_follow_up_date = '';
@@ -1762,12 +1854,11 @@ var vue = new Vue({
       if(ids){
         return paramsJson ={
           "a.name" : name,
+          "a.introduce" : introduce,
           "a.cooperative_brand" : cooperative_brand,
           "a.customer_status" : customer_status,
-          "a.customer_level" : customer_level,
-          "a.intimacy" : intimacy,
           "a.now_principal_id" : now_principal_id,
-          "a.last_month_rfm" : last_month_rfm,
+          "a.customer_level" : customer_level,
           "a.last_follow_up_date" :last_follow_up_date,
           "a.create_date" :create_date,
           "a.first_cooperation_date" :  " is not null",
@@ -1776,12 +1867,11 @@ var vue = new Vue({
       }else{
         return paramsJson ={
           "a.name" : name,
+          "a.introduce" : introduce,
           "a.cooperative_brand" : cooperative_brand,
           "a.customer_status" : customer_status,
-          "a.customer_level" : customer_level,
-          "a.intimacy" : intimacy,
           "a.now_principal_id" : now_principal_id,
-          "a.last_month_rfm" : last_month_rfm,
+          "a.customer_level" : customer_level,
           "a.last_follow_up_date" :last_follow_up_date,
           "a.create_date" :create_date,
           "a.first_cooperation_date" :  " is not null"
@@ -1817,8 +1907,8 @@ var vue = new Vue({
     //添加客户表单信息
     clientprimsData : function(){
       var id = this.client.id, 
-      name = this.client.name,
-      introduce  = this.client.introduce,
+      name = this.client.company_type == '个人客户'?this.client.name:'',
+      introduce  = this.client.company_type != '个人客户'?this.client.introduce:'',
       deposit  = this.client.deposit,
       contacts_name = this.client.contacts_name,
       contacts_tel  = this.client.contacts_tel,
@@ -1839,15 +1929,30 @@ var vue = new Vue({
       province  = this.client.province,
       city  = this.client.city,
       district  = this.client.district,
-      address  = this.client.address,
+      address  = this.client.address1,
       first_cooperation_date  = this.client.first_cooperation_date?moment(this.client.first_cooperation_date).format("YYYY-MM-DD  HH:mm:ss"):'',
       first_contact_sales  = this.client.first_contact_sales,
       erosion_index  = this.client.erosion_index,
       erosion_cause  = this.client.erosion_cause,
-      legal_person  = this.client.legal_person,
+      legal_person  = this.client.company_type != '个人客户'?this.client.legal_person:'',
       registered_capital = this.client.registered_capital,
       annual_sales_volume  = this.client.annual_sales_volume,
       team_size  = this.client.team_size;
+      //新增字段
+      receive_address = this.client.receive_address;
+      charter =  this.client.company_type != '个人客户'?this.client.charter:'';
+      p_id = this.client.p_id;
+      receive_phone = this.client.receive_phone;
+      consignee = this.client.consignee;
+      company_type = this.client.company_type;
+      p_name = '';
+
+      //获取母公司名称
+      for(let b=0;b<this.pcustomer.length;b++){
+        if(p_id = this.pcustomer[b].id){
+          p_name = this.pcustomer[b].introduce;
+        }
+      }
      
       //获取负责人人名称
       for(var i=0;i<this.options1.length;i++){
@@ -1855,7 +1960,7 @@ var vue = new Vue({
           now_principal_name = this.options1[i].firstname
         }
       }
-
+      
       //数据整理
       var data = {
         id : id,
@@ -1889,32 +1994,38 @@ var vue = new Vue({
         team_size : team_size,
         province : province,
         city : city,
-        district : district //省市县
+        district : district, //省市县
+        //修改后添加的字段
+        receive_address : receive_address,
+        charter : charter,
+        p_id : p_id,
+        receive_phone : receive_phone,
+        consignee : consignee,
+        company_type : company_type,
+        p_name : p_name
       };
 
-      //判断客户名称不能空
-      if(name != '' && introduce != '' && cooperative_brand != '' && cooperation_platform != '' && label != ''){
-        return this.dealElement(data);
+      console.log(data);
+      if(company_type !=''){
+        //判断必填项数据
+        if(company_type == '企业客户'){
+          if(legal_person!='' && consignee!='' && receive_phone!='' && introduce!='' && charter!='' && now_principal_id!='' && receive_address!=''){
+
+            return this.dealElement(data);
+          }else{
+            this.$message('必填项不能为空!');
+            return false;
+          }
+        }else{
+          if(name!='' && consignee!='' && receive_phone!='' && now_principal_id!='' && receive_address!=''){
+            return this.dealElement(data);
+          }else{
+            this.$message('必填项不能为空!');
+            return false;
+          }
+        }
       }else{
-        //判断标签是否为空
-        if(label == ''){
-          this.$message('最少添加一个标签');
-        }
-        //判断平台是否为空
-          if(cooperation_platform == ''){
-          this.$message('最少添加一个平台');
-        }
-        //判断品牌是否为空
-        if(cooperative_brand == ''){
-          this.$message('最少添加一个品牌');
-        }
-        //判断客户简称不能为空
-        if(introduce == ''){
-          this.$message('请填写客户全称');
-        }
-        if(name == ''){
-          this.$message('请填写客户简称');
-        }
+        this.$message('必填项不能为空!');
       }
     },
 
@@ -1963,7 +2074,7 @@ var vue = new Vue({
       let para = {
         dataJson : JSON.stringify(this.$options.methods.clientprimsData.bind(this)(''))
       };
-      if(para.dataJson != undefined){
+      if(para.dataJson != false){
         this.$http.post(url,para,{emulateJSON: true}).then((res) => {  //.then() 返回成功的数据
           if(res.data.status == "success"){
             this.$message('创建客户成功');
@@ -1985,9 +2096,15 @@ var vue = new Vue({
 
     closeDialog : function(){
       this.client.id = '';
+      this.client.company_type = '';
+      this.client.consignee = '';
+      this.client.receive_phone = '';
+      this.client.charter = '';
+      this.client.p_id = '';
       this.client.name = '';
       this.client.introduce = '';
       this.client.deposit = '';
+      this.client.receive_address = '';
       this.client.contacts_name = '';
       this.client.contacts_tel = '';
       this.client.importance = '';
@@ -2067,9 +2184,10 @@ var vue = new Vue({
       this.client.id = id;
       this.client.name = this.clientShow.name?this.clientShow.name:'';
       this.client.introduce = this.clientShow.introduce?this.clientShow.introduce:'';
+      this.client.charter =  this.clientShow.charter?this.clientShow.charter:'';
       this.client.deposit = this.clientShow.deposit?this.clientShow.deposit:'';
       this.client.contacts_name = this.clientShow.contacts_name?this.clientShow.contacts_name:'';
-      this.client.contacts_tel = this.clientShow.contacts_tel?this.clientShow.contacts_tel:'';
+      this.client.contacts_tel = this.clientShow.contacts_tel?this.clientShow.contacts_tel.replace(/\+86-/, ""):'';
       this.client.importance = this.clientShow.importance?this.clientShow.importance:'';
       this.client.last_month_rfm = this.clientShow.last_month_rfm?this.clientShow.last_month_rfm:'';
       this.client.u8_code = this.clientShow.u8_code?this.clientShow.u8_code:'';
@@ -2096,6 +2214,11 @@ var vue = new Vue({
       this.client.label = this.clientShow.label?this.clientShow.label.split(','):[];
       this.client.cooperative_brand = this.clientShow.cooperative_brand?this.clientShow.cooperative_brand.split(','):[]; //品牌
       this.client.cooperation_platform = this.clientShow.cooperation_platform?this.clientShow.cooperation_platform.split(','):[]; //店铺
+      this.client.receive_address = this.clientShow.receive_address?this.clientShow.receive_address:'';
+      this.client.company_type = this.clientShow.company_type?this.clientShow.company_type:'';
+      this.client.p_id = this.clientShow.p_id?this.clientShow.p_id:'';
+      this.client.receive_phone =this.clientShow.receive_phone?this.clientShow.receive_phone.replace(/\+86-/, ""):'';
+      this.client.consignee = this.clientShow.consignee?this.clientShow.consignee:'';
     },
 
     //修改数据提交
@@ -2109,7 +2232,7 @@ var vue = new Vue({
       };
       
       //判断false
-      if(para.dataJson != undefined){
+      if(para.dataJson != false){
         this.$http.post(url,para,{emulateJSON: true}).then((res) => {  //.then() 返回成功的数据
           if(res.data.status == "success"){
           //调用列表接口
@@ -3679,17 +3802,13 @@ var vue = new Vue({
           this.stock(res.data.data);
         }else{
           this.stockDetail.money = 0;
-          this.stockDetail.oneYearRfm = {
-            'R':0,
-            'F':0,
-            'M':0
-          };
-          this.stockDetail.threeMonthRfm = {
-            'R':0,
-            'F':0,
-            'M':0
-          };
-          
+          this.stockDetail.oneYearRfm = {'R':0,'F':0,'M':0};
+          this.stockDetail.threeMonthRfm = {'R':0,'F':0, 'M':0};
+          this.stockDetail.brandRfm = [
+            {brandname : '-',
+            oneYearRfm : {'R':0,'F':0,'M':0},
+            threeMonthRfm : {'R':0,'F':0,'M':0}}
+          ]
         }
         
       })
