@@ -190,7 +190,8 @@ var vue = new Vue({
         funnelld : { //漏斗图
             detail : [],
             series : []
-        }
+        },
+        width_home:''
     },
     created : function(){
         var vm=this;
@@ -215,25 +216,27 @@ var vue = new Vue({
                 $('.toclient').css({'background-color':'rgba(0,0,0,.2)'});
                 $('.tosale').css({'background-color':'rgba(0,0,0,.5)'});
             }
+        },
+        this.ww();
+        const that = this
+        window.onresize = () => {
+            return (() => {
+              this.ww();
+            })();
         }
     },
     methods:{
-        //获取当前页面的url路径
-        vueUrl :function(){
-            var url = location.href.split('/rhmcrm')[0];
-            if(url == "http://test.runhemei.com/maochao_test"){
-                url = "http://test.runhemei.com/maochao";
-                this.https = url;
-                return url;
-            }else if(url == 'http://ibos.runhemei.com/maochao_test'){
-                url = "http://ibos.runhemei.com/maochao";
-                this.https = url;
-                return url;
-            }else{
-                this.https = url;
-                return url;
-            }
+        //请求页面宽度
+        ww(){
+            this.width_home = window.innerWidth;
+            console.log(this.width_home);
         },
+        //获取当前页面的url路径
+        vueUrl(){
+            var url = location.href.split('/maochao')[0];
+            this.https = url+'/maochao';
+            return this.https;
+          },
 
         //获取当前登录用户的信息
         getUser : function(url){
@@ -243,6 +246,15 @@ var vue = new Vue({
             .catch(function(res) {
                 console.log(res)
             }) 
+        },
+
+        //页面收缩条件处理
+        select_home(){
+            if(this.width_home>=1000){
+                return '1';
+            }else{
+                return '0';
+            }
         },
 
         //判断在ibos中，弹出新的标签页
@@ -580,7 +592,7 @@ var vue = new Vue({
                         title: {
                             textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
                                 fontWeight: 'bolder',
-                                fontSize: 15,
+                                fontSize: 10,
                                 fontStyle: 'italic',
                                 color: '#000',
                                 shadowColor: '#000', //默认透明
@@ -588,8 +600,12 @@ var vue = new Vue({
                             }
                         },
                         
-                        detail : {formatter:'{value}%'},
-                        data:[{value: this.dashboardStatis.dashboard1.finishingRate, name: '完成率'}]
+                        detail : {formatter:'{value}%',
+                        textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                            fontSize: 18,
+                        }},
+                        data:[{value: this.dashboardStatis.dashboard1.finishingRate, name: '完成率'}],
+                        
                     }
                 ]
             };
@@ -657,14 +673,17 @@ var vue = new Vue({
                         title: {
                             textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
                                 fontWeight: 'bolder',
-                                fontSize: 15,
+                                fontSize: 10,
                                 fontStyle: 'italic',
                                 color: '#000',
                                 shadowColor: '#000', //默认透明
                                 shadowBlur: 10
                             }
                         },
-                        detail : {formatter:'{value}%'},
+                        detail : {formatter:'{value}%',
+                        textStyle: { // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                            fontSize: 18,
+                        }},
                         data:[{value: this.dashboardStatis.dashboard2.finishingRate, name: '完成率'}]
                     }
                 ]
@@ -925,7 +944,7 @@ var vue = new Vue({
             let para = this.$options.methods.saleTrandPrimes.bind(this)();
             this.$http.post(url,para,{emulateJSON: true}).then((res) => {  //.then() 返回成功的数据
                 //调用客户趋势展示的方法
-                this.saleTrandEcharts(timeData,this.ArrayProjectSum(res.data.data.result));
+                this.saleTrandEcharts(timeData,this.ArrayProjectSum(res.data.data.result.sort(function(a, b) {return Number(b.data_date)< Number(a.data_date) ? 1 : -1;})));
             })
             .catch(function(res) {
                 console.log("请求数据失败");
@@ -943,9 +962,15 @@ var vue = new Vue({
             for(let i=0;i<datashow.length;i++){
                 for(let j=0;j<timeData.length;j++){
                     if(timeData[j] == datashow[i].data_date){
+                        var pect = ((datashow[i].index16?Number(datashow[i].index16):0)/(datashow[i].index33?Number(datashow[i].index33):0));
+                        if(pect==Infinity){
+                            pect = 0;
+                        }else{
+                            pect = pect*100;
+                        }
                         data1.push({'time':timeData[j],value:datashow[i].index33?Number(datashow[i].index33):0}); //目标销售额
                         data2.push({'time':timeData[j],value:datashow[i].index16?Number(datashow[i].index16):0}); //完成销售额
-                        data3.push({'time':timeData[j],value:(((datashow[i].index16?Number(datashow[i].index16):0)/(datashow[i].index33?Number(datashow[i].index33):0))*100).toFixed(2)}); //完成率 
+                        data3.push({'time':timeData[j],value:pect.toFixed(2)}); //完成率 
                         data4.push({'time':timeData[j],value:datashow[i].index36?Number(datashow[i].index36):0}); //新增客户销售额
                         data5.push({'time':timeData[j],value:datashow[i].index37?Number(datashow[i].index37).toFixed(2):0}); //流水客户半年月均销售额
 
@@ -959,13 +984,15 @@ var vue = new Vue({
                 }
             }
 
+        
+
             this.saleAnalysis.series = [
                 {
                     name:'完成率',
                     type:'line',
                     stack: '',
                     yAxisIndex: 1,
-                    data:this.heavy1(data3,timeData),
+                    data:this.heavy1(this.unique(data3),timeData),
                     itemStyle: {
                         normal: {
                             label: {
@@ -979,25 +1006,25 @@ var vue = new Vue({
                     name:'目标销售额',
                     type:'line',
                     stack: '',
-                    data:this.heavy1(data1,timeData),
+                    data:this.heavy1(this.unique(data1),timeData),
                 },
                 {
                     name:'完成销售额',
                     type:'line',
                     stack: '',
-                    data:this.heavy1(data2,timeData)
+                    data:this.heavy1(this.unique(data2),timeData)
                 },
                 {
                     name:'新增客户销售额',
                     type:'line',
                     stack: '',
-                    data:this.heavy1(data4,timeData)
+                    data:this.heavy1(this.unique(data4),timeData)
                 },
                 {
                     name:'流失客户半年月均销售额',
                     type:'line',
                     stack: '',
-                    data:this.heavy1(data5,timeData)
+                    data:this.heavy1(this.unique(data5),timeData)
                 }
             ];
             //销售趋势分析折线图
@@ -1005,6 +1032,29 @@ var vue = new Vue({
          
         },
 
+        //数据去重
+        unique :function(arr){
+            var map = {},dest = [];
+        　　for(var i = 0; i < arr.length; i++){
+        　　　　var ai = arr[i];
+        　　　　if(!map[ai.time]){
+        　　　　　　dest.push({
+        　　　　　　　　time: ai.time,
+        　　　　　　　　value: ai.value
+        　　　　　　});
+        　　　　　　map[ai.time] = ai;
+        　　　　}else{
+        　　　　　　for(var j = 0; j < dest.length; j++){
+        　　　　　　　　var dj = dest[j];
+        　　　　　　　　if(dj.time == ai.time){
+        　　　　　　　　　　dj.value=(parseFloat(dj.value) + parseFloat(ai.value)).toString();
+        　　　　　　　　　　break;
+        　　　　　　　　}
+        　　　　　　}
+        　　　　}
+        　　};
+            return dest;
+        },
 
         //销售趋势分析折线图
         fxtrend:function(){
@@ -1118,6 +1168,7 @@ var vue = new Vue({
             tier4 = 'all',
             tier5 = 'all';
             var data = '';
+            //品牌为all时，请求所有品牌的数据
             if(tier3 == 'all'){
                 data = {
                     "dateBegin" : dateBegin,
@@ -1127,19 +1178,10 @@ var vue = new Vue({
                     "tier5" : tier5,
                     "dimension" : '101000.110'
                 }; 
+                return data;
             }else{
-                data = {
-                    "dateBegin" : dateBegin,
-                    "tier1" : tier1,
-                    "tier2" : tier2,
-                    "tier3" : tier3,
-                    "tier4" : tier4,
-                    "tier5" : tier5,
-                    "dimension" : '101000.110'
-                }; 
+                return false;
             }
-       
-            return data;
         },
         
         //请求饼状图展示数据
@@ -1152,13 +1194,46 @@ var vue = new Vue({
                 url =this.https+'/dw/getCustomerDrawVal';
                 piedata = this.clientpiePrimse();
             }
-            this.$http.get(url,{params:piedata}).then((res) => {  //.then() 返回成功的数据
-                //请求饼状图展示数据
-                this.clientpiechar(res.data);
-            })
-            .catch(function(res) {
-                console.log(res)
-            }) 
+            if(piedata!=false){
+                //判断品牌是否是All，是，判断浏览器的缓存中是否存在数据，不存在请求
+                if(this.custype != ''){
+                    this.$http.get(url,{params:piedata}).then((res) => {  //.then() 返回成功的数据
+                        //请求饼状图展示数据
+                        this.clientpiechar(res.data);
+                    })
+                    .catch(function(res) {
+                        console.log(res)
+                    }) 
+                }else{
+                    var key = JSON.parse(localStorage.getItem("piedata"))
+                    if(key == null){
+                        this.$http.get(url,{params:piedata}).then((res) => {  //.then() 返回成功的数据
+                            //请求饼状图展示数据
+                            localStorage.setItem("piedata",JSON.stringify(res.data));
+                            this.clientpiechar(res.data);
+                        })
+                        .catch(function(res) {
+                            console.log(res)
+                        }) 
+                    }else{
+                        this.clientpiechar(key);
+                    }
+                }
+               
+            }else{
+                var name = '';
+                for(var i=0;i<this.crmbrand.length;i++){
+                    if(this.crmbrand[i].dic_code == this.cusdatafx.brand){
+                        name = this.crmbrand[i].dic_name;break;
+                    }
+                }
+                this.clienData.datadetail.length = 0;
+                this.clienData.series.length = 0;
+                this.clienData.datadetail.push(name);
+                this.clienData.series.push({value:this.clienData.data.cumulative, name:name});
+                //加载饼状图
+                this.cusanalyze();
+            }
         },
 
         //客户画像饼状图展示
@@ -1288,8 +1363,8 @@ var vue = new Vue({
                     {
                         name:'', //访问来源
                         type:'pie',
-                        radius : '50%',
-                        center: ['45%', '30%'],
+                        radius : '60%',
+                        center: ['45%', '45%'],
                         data: this.clienData.series
                     }
                 ]
@@ -1332,7 +1407,7 @@ var vue = new Vue({
             let para = this.$options.methods.clientPrimse.bind(this)();
             this.$http.post(url,para,{emulateJSON: true}).then((res) => {  //.then() 返回成功的数据
                 //调用客户趋势展示的方法
-                this.ClientEcharts(timeData,this.ArrayProjectSum(res.data.data.result));
+                this.ClientEcharts(timeData,this.ArrayProjectSum(res.data.data.result.sort(function(a, b) {return Number(b.data_date)< Number(a.data_date) ? 1 : -1;})));
             })
             .catch(function(res) {
                 console.log("请求数据失败");
@@ -1384,6 +1459,7 @@ var vue = new Vue({
                 data5 = new Array(), //近12月成交客户数
                 data6 = new Array(), //跟进客户
                 data7 = new Array(); //跟进次数
+                
             for(let i=0;i<datashow.length;i++){
                 for(let j=0;j<timeData.length;j++){
                     if(timeData[j] == datashow[i].data_date){
@@ -1395,7 +1471,8 @@ var vue = new Vue({
                         data6.push({'time':timeData[j],value:datashow[i].index7?datashow[i].index7:0}); //跟进客户
                         data7.push({'time':timeData[j],value:datashow[i].index8?datashow[i].index8:0}); //跟进次数
 
-                    }else{
+                    }
+                    else{
                         data1.push({'time':timeData[j],value:0});
                         data2.push({'time':timeData[j],value:0});
                         data3.push({'time':timeData[j],value:0});
@@ -1406,47 +1483,48 @@ var vue = new Vue({
                     }
                 }
             }
+            
             this.custrand.series =  [
                 {
                     name:'客户总数',
                     type:'line',
                     stack: '',
-                    data: this.heavy1(data1,timeData)
+                    data: this.heavy1(this.unique(data1),timeData)
                 },{
                     name:'新增客户',
                     type:'line',
                     stack: '',
-                    data:this.heavy1(data2,timeData)
+                    data:this.heavy1(this.unique(data2),timeData)
                 },
                 {
                     name:'近3月成交客户数',
                     type:'line',
                     stack: '',
-                    data:this.heavy1(data3,timeData)
+                    data:this.heavy1(this.unique(data3),timeData)
                 },
                 {
                     name:'近6月成交客户数',
                     type:'line',
                     stack: '',
-                    data: this.heavy1(data4,timeData)
+                    data: this.heavy1(this.unique(data4),timeData)
                 },
                 {
                     name:'近12月成交客户数',
                     type:'line',
                     stack: '',
-                    data: this.heavy1(data5,timeData)
+                    data: this.heavy1(this.unique(data5),timeData)
                 },
                 {
                     name:'跟进客户',
                     type:'line',
                     stack: '',
-                    data: this.heavy1(data6,timeData)
+                    data: this.heavy1(this.unique(data6),timeData)
                 },
                 {
                     name:'跟进次数',
                     type:'line',
                     stack: '',
-                    data:this.heavy1(data7,timeData)
+                    data:this.heavy1(this.unique(data7),timeData)
                 }
             ];
             //客户折线图展示
